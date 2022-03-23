@@ -34,6 +34,16 @@ void initialize_rnn(RNN *rnn, int input_size, int hidden_size, int output_size);
 
 void randomly_initalialize_mat(double **a, int row, int col);
 
+void forward(RNN *rnn, double **x, int t_p);
+
+double *mat_mul(double* a, double** b, int n, int p);
+
+double *softmax(int n, double* input);
+
+double *add_vect(double *a, double *b, int n);
+
+double *tan_h(int n, double* input) ;
+
 void initialize_vect_zero(double *a, int n);
 
 double MSE(double *y_pred , double *y, double n) ;

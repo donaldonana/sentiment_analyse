@@ -7,9 +7,60 @@
 
 
 
+//tp: taille de la phrase (nombre de mots)
+void forward(RNN *rnn, double **x, int t_p)
+{
+	//self.last_inputs = inputs
+	double **hs = malloc(sizeof(double *)*100);
+	double *h = malloc(sizeof(double)*rnn->hidden_size);
+	initialize_vect_zero(h, rnn->hidden_size);
+	hs[0] = h ;
 
 
+	for (int i = 0; i < t_p; i++)
+	{
+		//h = np.tanh(self.Wxh @ x + self.Whh @ h + self.bh)
+		double *temp1 = mat_mul(x[i], rnn->Wxh, rnn->input_size, rnn->hidden_size);
+		double *temp2 = mat_mul(hs[i], rnn->Whh, rnn->hidden_size, rnn->hidden_size);
+		double *temp3 = add_vect(temp1, temp2, rnn->hidden_size);
+		double *temp4 = add_vect(temp3, rnn->bh, rnn->hidden_size);
+		h = tan_h(rnn->hidden_size, temp4);
+		hs[i+1] = h ;
+	}
 
+	double *temp5 = mat_mul(h, rnn->Wyh, rnn->hidden_size, rnn->output_size);
+	double *temp6 = add_vect(temp5, rnn->by, rnn->output_size);
+	rnn->y = softmax(rnn->output_size, temp6);
+	
+}
+
+double *mat_mul(double* a, double** b, int n, int p) {
+    // matrix a of size 1 x n (array)
+    // matrix b of size n x p
+    // matrix result of size 1 x p (array)
+    // result = a * b
+	double *result = malloc(sizeof(double)*p);
+    int j, k;
+    for (j = 0; j < p; j++) {
+        result[j] = 0.0;
+        for (k = 0; k < n; k++)
+            result[j] += (a[k] * b[k][j]);
+    }
+
+	return result;
+}
+
+double *add_vect(double *a, double *b, int n)
+{
+	double *result = malloc(sizeof(double)*n);
+	for (int i = 0; i < n; i++)
+	{
+		result[i] = a[i] + b[i] ;
+	}
+
+	return result ;
+	
+}
 
 
 void initialize_rnn(RNN *rnn, int input_size, int hidden_size, int output_size)
@@ -55,6 +106,74 @@ void initialize_vect_zero(double *a, int n)
 		a[i] = 0 ;
 	}
 	
+}
+
+
+double *tan_h(int n, double* input) {
+    //output[0] = 1; // Bias term
+
+	double *output = malloc(sizeof(double)*n);
+
+    int i;
+    for (i = 0; i < n; i++) 
+	{
+        output[i] = tanh(input[i]); // tanh function
+
+	}
+
+	return output ; 
+}
+
+
+double *softmax(int n, double* input) {
+
+	double *output = malloc(sizeof(double)*n);
+    //output[0] = 1; // Bias term
+
+    int i;
+    double sum = 0.0;
+    for (i = 0; i < n; i++)
+	{
+        sum += exp(input[i]);
+
+	}
+
+    for (i = 0; i < n; i++) 
+	{
+        output[i] = exp(input[i]) / sum; // Softmax function
+
+	}
+
+	return output;
+}
+
+
+
+
+void identity(int n, double* input, double* output) {
+    output[0] = 1; // Bias term
+
+    int i;
+    for (i = 0; i < n; i++) 
+        output[i+1] = input[i]; // Identity function
+}
+
+void sigmoid(int n, double* input, double* output) {
+    output[0] = 1; // Bias term
+
+    int i;
+    for (i = 0; i < n; i++) 
+        output[i+1] = 1.0 / (1.0 + exp(-input[i])); // Sigmoid function
+}
+
+
+void relu(int n, double* input, double* output) {
+
+    output[0] = 1; // Bias term
+
+    int i;
+    for (i = 0; i < n; i++) 
+        output[i+1] = MAX(0.0, input[i]); // ReLU function
 }
 
 
