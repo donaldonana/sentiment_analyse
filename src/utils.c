@@ -8,14 +8,14 @@
 
 
 //tp: taille de la phrase (nombre de mots)
-void forward(RNN *rnn, double **x, int t_p)
+double **forward(RNN *rnn, double **x, int t_p)
 {
 	//self.last_inputs = inputs
 	double **hs = malloc(sizeof(double *)*100);
 	double *h = malloc(sizeof(double)*rnn->hidden_size);
 	initialize_vect_zero(h, rnn->hidden_size);
 	hs[0] = h ;
-
+	rnn->last_intput = x;
 
 	for (int i = 0; i < t_p; i++)
 	{
@@ -31,8 +31,71 @@ void forward(RNN *rnn, double **x, int t_p)
 	double *temp5 = mat_mul(h, rnn->Wyh, rnn->hidden_size, rnn->output_size);
 	double *temp6 = add_vect(temp5, rnn->by, rnn->output_size);
 	rnn->y = softmax(rnn->output_size, temp6);
+
+	return hs;
 	
 }
+
+void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
+{
+
+	// Calculate dL/dWhy and dL/dby.
+	double *d_by = d_y;
+	double **d_Why = vect_mult(last_h[t_p-1], d_y, rnn->hidden_size, rnn->output_size);
+
+	// Initialize dL/dWhh, dL/dWxh, and dL/dbh to zero.
+	double **d_Whh = allocate_dynamic_float_matrix(rnn->hidden_size, rnn->hidden_size);
+	initialize_mat_zero(d_Whh, rnn->hidden_size, rnn->hidden_size);
+	double **d_Wxh = allocate_dynamic_float_matrix(rnn->input_size, rnn->hidden_size);
+	initialize_mat_zero(d_Wxh, rnn->input_size, rnn->hidden_size);
+	double *d_bh = malloc(sizeof(double)*rnn->hidden_size);
+	initialize_vect_zero(d_bh, rnn->hidden_size);
+
+	//Calculate dL/dh for the last h.
+	double *d_h = mat_mul(d_y, trans_mat(rnn->Wyh, rnn->hidden_size, rnn->output_size),  rnn->output_size, rnn->hidden_size);
+
+
+	for (int i = t_p; i > 0; i--)
+	{
+		double *temp1 = vect_pow_2(last_h[i], rnn->hidden_size);
+		double *temp2 = one_minus_vect(temp1, rnn->hidden_size);
+		double *temp = hadamar_vect(d_h, temp2, rnn->hidden_size);
+
+
+		// dL/db = dL/dh * (1 - h^2)
+		d_bh = add_vect(d_bh, temp, rnn->hidden_size);
+
+		//dL/dWhh = dL/dh * (1 - h^2) * h_{t-1}
+		d_Whh = add_matrix(d_Whh, vect_mult(temp, last_h[i-1], rnn->hidden_size, rnn->hidden_size), 
+		rnn->hidden_size, rnn->hidden_size);
+
+		//dL/dWxh = dL/dh * (1 - h^2) * x
+		d_Wxh = add_matrix(d_Wxh, vect_mult(temp, rnn->last_intput[i-1], rnn->output_size, rnn->hidden_size), 
+		rnn->output_size, rnn->hidden_size);
+
+		//Update weights and biases using gradient descent.
+
+		rnn->Whh = minus_matrix(rnn->Whh, scal_mult_mat(d_Whh, 0.05, rnn->hidden_size, rnn->hidden_size),
+							rnn->hidden_size, rnn->hidden_size);
+		rnn->Wxh = minus_matrix(rnn->Wxh, scal_mult_mat(d_Wxh, 0.05, rnn->input_size, rnn->hidden_size),
+							rnn->input_size, rnn->hidden_size);
+		rnn->Wyh = minus_matrix(rnn->Wyh, scal_mult_mat(d_Why, 0.05, rnn->hidden_size, rnn->output_size),
+							rnn->hidden_size, rnn->output_size);
+		rnn->bh = minus_vect(rnn->bh, scal_mult_vect(d_bh, 0.05, rnn->hidden_size), rnn->hidden_size);
+		rnn->by = minus_vect(rnn->by, scal_mult_vect(d_by, 0.05, rnn->output_size), rnn->output_size);
+
+
+
+
+
+	}
+
+	printf("\n ----tout est ok back----- \n");
+	
+
+
+}
+
 
 double *mat_mul(double* a, double** b, int n, int p) {
     // matrix a of size 1 x n (array)
@@ -50,12 +113,57 @@ double *mat_mul(double* a, double** b, int n, int p) {
 	return result;
 }
 
+double **vect_mult(double *a , double *b, int n , int m)
+{
+	// matrix a of size n x 1 (array)
+    // matrix b of size 1 x m
+    // matrix result of size n x m (array)
+    // result = a * b
+
+	double **result = allocate_dynamic_float_matrix(n,m);
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			result[i][j] = a[i]*b[j]; 
+		}
+		
+	}
+
+	return result; 
+	
+}
+
 double *add_vect(double *a, double *b, int n)
 {
 	double *result = malloc(sizeof(double)*n);
 	for (int i = 0; i < n; i++)
 	{
 		result[i] = a[i] + b[i] ;
+	}
+
+	return result ;
+	
+}
+
+double *minus_vect(double *a, double *b, int n)
+{
+	double *result = malloc(sizeof(double)*n);
+	for (int i = 0; i < n; i++)
+	{
+		result[i] = a[i] - b[i] ;
+	}
+
+	return result ;
+	
+}
+
+double *scal_mult_vect(double *a, double scal, int n)
+{
+	double *result = malloc(sizeof(double)*n);
+	for (int i = 0; i < n; i++)
+	{
+		result[i] = a[i] * scal ;
 	}
 
 	return result ;
@@ -108,6 +216,119 @@ void initialize_vect_zero(double *a, int n)
 	
 }
 
+void initialize_mat_zero(double **a, int row, int col)
+{
+	for (int i = 0; i < row; i++)
+	{
+		for (int j = 0; j < col; j++)
+		{
+			a[i][j] = 0;
+		}
+		
+	}
+	
+}
+
+double **scal_mult_mat(double **a, double scal, int row, int col)
+{
+	double **result = allocate_dynamic_float_matrix(row, col);
+	for (int i = 0; i < row; i++)
+	{
+		for (int j = 0; j < col; j++)
+		{
+			result[i][j] = scal*a[i][j];
+		}
+		
+	}
+
+	return result;
+	
+}
+
+double **add_matrix(double **a , double **b, int row, int col)
+{
+
+	double **result = allocate_dynamic_float_matrix(row, col);
+
+	for (int i = 0; i < row; i++)
+	{
+		for (int j = 0; j < col; j++)
+		{
+			result[i][j] = a[i][j] + b[i][j];
+		}
+		
+	}
+
+	return result;
+}
+
+double **minus_matrix(double **a , double **b, int row, int col)
+{
+
+	double **result = allocate_dynamic_float_matrix(row, col);
+
+	for (int i = 0; i < row; i++)
+	{
+		for (int j = 0; j < col; j++)
+		{
+			result[i][j] = a[i][j] - b[i][j];
+		}
+		
+	}
+
+	return result;
+}
+
+double **trans_mat(double **a, int row , int col)
+{
+	double **result = allocate_dynamic_float_matrix(col, row);
+	
+	for(int i = 0; i < row; i++)
+    {
+        for(int j = 0; j < col; j++)
+        {
+            result[j][i] = a[i][j];
+        }
+    }
+
+	return result ;
+}
+
+double *vect_pow_2(double *a, int n)
+{
+	double *result = malloc(sizeof(double)*n);
+	for (int i = 0; i < n; i++)
+	{
+		result[i] = pow(a[i], 2);
+	}
+
+	return result;
+	
+}
+
+double *one_minus_vect(double *a , int n)
+{
+	double *result = malloc(sizeof(double)*n);
+	for (int i = 0; i < n; i++)
+	{
+		result[i] = 1 - a[i];
+	}
+
+	return result;
+
+}
+
+double *hadamar_vect(double *a, double *b, int n)
+{
+	double *result = malloc(sizeof(double)*n);
+	for (int i = 0; i < n; i++)
+	{
+		result[i] = b[i] * a[i];
+	}
+
+	return result;
+}
+
 
 double *tan_h(int n, double* input) {
     //output[0] = 1; // Bias term
@@ -146,6 +367,16 @@ double *softmax(int n, double* input) {
 
 	return output;
 }
+
+void copy_vect(double *a, double *b , int n)
+{
+	for (int i = 0; i < n; i++)
+	{
+		a[i] = b[i];
+	}
+	
+}
+//====================================================
 
 
 
@@ -207,7 +438,6 @@ double MSE(double *y_pred , double *y, double n) {
 
 
 
-//====================================================
 
 
 

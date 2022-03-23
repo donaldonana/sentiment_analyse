@@ -20,6 +20,7 @@ struct RNN
 	double **Whh;
 	//vecteur de poid couche cachée et couche de sortie (neurons X outputs)
 	double **Wyh;
+    double **last_intput;
 	double *bh;
 	double *by;
 	double *y ;
@@ -34,9 +35,29 @@ void initialize_rnn(RNN *rnn, int input_size, int hidden_size, int output_size);
 
 void randomly_initalialize_mat(double **a, int row, int col);
 
-void forward(RNN *rnn, double **x, int t_p);
+double **forward(RNN *rnn, double **x, int t_p);
+
+void backforward(RNN *rnn, double *d_y, double **last_h, int t_p);
+
+double **vect_mult(double *a , double *b, int n , int m);
+
+void initialize_mat_zero(double **a, int row, int col);
+
+double **scal_mult_mat(double **a, double scal, int row, int col);
+
+double *scal_mult_vect(double *a, double scal, int n);
+
+double *minus_vect(double *a, double *b, int n);
+
+double **trans_mat(double **a, int row , int col);
 
 double *mat_mul(double* a, double** b, int n, int p);
+
+double *vect_pow_2(double *a, int n);
+
+double *one_minus_vect(double *a , int n);
+
+double *hadamar_vect(double *a, double *b, int n);
 
 double *softmax(int n, double* input);
 
@@ -45,6 +66,12 @@ double *add_vect(double *a, double *b, int n);
 double *tan_h(int n, double* input) ;
 
 void initialize_vect_zero(double *a, int n);
+
+void copy_vect(double *a, double *b , int n);
+
+double **add_matrix(double **a , double **b, int row, int col);
+
+double **minus_matrix(double **a , double **b, int row, int col);
 
 double MSE(double *y_pred , double *y, double n) ;
 
