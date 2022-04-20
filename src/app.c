@@ -55,8 +55,6 @@ int main()
     backforward(rnn, dl_dy, last_h, 2);
 
 
-
-    
   }
   
   printf("\n-----tout est oki-----\n");
