@@ -11,6 +11,14 @@
 #define NUM_COMMANDS 2
 
 
+
+typedef struct PHRASE PHRASE;
+struct PHRASE
+{
+	int nm;
+	double **w2vec;
+};
+
 typedef struct RNN RNN;
 struct RNN
 {
@@ -28,6 +36,7 @@ struct RNN
 	int hidden_size;
 	int output_size;
 };
+
 
 
 
@@ -86,10 +95,16 @@ void plot_error_iter(double *e) ;
 void randomize(int *array, int n) ;
 
 
+void MotsParPhrase(FILE *fin, PHRASE *phrase);
+
+int NPhrases(FILE *fin);
 
 
+void ReadWord(char *word, FILE *fin) ;
 
+void alloc_phrase(PHRASE *phrase, int *mpp, int layer1_size, int np);
 
+int load_target(int *target);
 
 
 #endif

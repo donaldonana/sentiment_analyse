@@ -3,15 +3,17 @@
 #include <math.h>
 #include "utils.h"
 #include <time.h>
-
-
+#include <string.h>
+#include <pthread.h>
+#define MAX_STRING 100
+#define TAILLE_MAX 1000000
 
 
 //tp: taille de la phrase (nombre de mots)
 double **forward(RNN *rnn, double **x, int t_p)
 {
 	//self.last_inputs = inputs
-	double **hs = malloc(sizeof(double *)*100);
+	double **hs = malloc(sizeof(double *)*t_p);
 	double *h = malloc(sizeof(double)*rnn->hidden_size);
 	initialize_vect_zero(h, rnn->hidden_size);
 	hs[0] = h ;
@@ -42,7 +44,6 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 	// Calculate dL/dWhy and dL/dby.
 	double *d_by = d_y;
 	double **d_Why = vect_mult(last_h[t_p-1], d_y, rnn->hidden_size, rnn->output_size);
-
 	// Initialize dL/dWhh, dL/dWxh, and dL/dbh to zero.
 	double **d_Whh = allocate_dynamic_float_matrix(rnn->hidden_size, rnn->hidden_size);
 	initialize_mat_zero(d_Whh, rnn->hidden_size, rnn->hidden_size);
@@ -70,15 +71,21 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 		rnn->hidden_size, rnn->hidden_size);
 
 		//dL/dWxh = dL/dh * (1 - h^2) * x
-		d_Wxh = add_matrix(d_Wxh, vect_mult(temp, rnn->last_intput[i-1], rnn->output_size, rnn->hidden_size), 
-		rnn->output_size, rnn->hidden_size);
+		d_Wxh = add_matrix(d_Wxh, vect_mult(temp, rnn->last_intput[i-1], rnn->input_size, rnn->hidden_size), 
+		rnn->input_size, rnn->hidden_size);
 
 		//Update weights and biases using gradient descent.
 
 		rnn->Whh = minus_matrix(rnn->Whh, scal_mult_mat(d_Whh, 0.05, rnn->hidden_size, rnn->hidden_size),
 							rnn->hidden_size, rnn->hidden_size);
-		rnn->Wxh = minus_matrix(rnn->Wxh, scal_mult_mat(d_Wxh, 0.05, rnn->input_size, rnn->hidden_size),
+
+		
+		double **donald = scal_mult_mat(d_Wxh, 0.05, rnn->input_size, rnn->hidden_size);
+
+
+		rnn->Wxh = minus_matrix(rnn->Wxh, donald,
 							rnn->input_size, rnn->hidden_size);
+
 		rnn->Wyh = minus_matrix(rnn->Wyh, scal_mult_mat(d_Why, 0.05, rnn->hidden_size, rnn->output_size),
 							rnn->hidden_size, rnn->output_size);
 		rnn->bh = minus_vect(rnn->bh, scal_mult_vect(d_bh, 0.05, rnn->hidden_size), rnn->hidden_size);
@@ -90,7 +97,7 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 
 	}
 
-	printf("\n ----tout est ok back----- \n");
+	//printf("\n ----tout est ok back----- \n");
 	
 
 
@@ -232,11 +239,14 @@ void initialize_mat_zero(double **a, int row, int col)
 double **scal_mult_mat(double **a, double scal, int row, int col)
 {
 	double **result = allocate_dynamic_float_matrix(row, col);
+
 	for (int i = 0; i < row; i++)
 	{
 		for (int j = 0; j < col; j++)
 		{
+
 			result[i][j] = scal*a[i][j];
+
 		}
 		
 	}
@@ -519,4 +529,119 @@ void display_matrix(double **a, int row, int col)
 		
 	}
 	
+}
+
+int NPhrases(FILE *fin)
+{
+    int n = 0;
+    char chaine[TAILLE_MAX] = "";
+    fseek(fin, 0, SEEK_SET);
+    while (fgets(chaine, TAILLE_MAX, fin) != NULL) // On lit le fichier tant qu'on ne reçoit pas d'erreur (NULL)
+    {
+       n = n + 1; // On affiche la chaîne qu'on vient de lire
+       
+    }
+
+    return n ;
+
+}
+
+void MotsParPhrase(FILE *fin, PHRASE *phrase){
+
+    char word[MAX_STRING];
+    int np = NPhrases(fin);
+    int p = 0;
+    fseek(fin, 0, SEEK_SET); 
+    int n = 0;
+    fseek(fin, 0, SEEK_SET);
+   
+       while (1) {
+            if (feof(fin) ) break;
+            ReadWord(word, fin);
+            //printf("\n%s\n", word);
+            phrase[n].nm  = p = p + 1 ;
+             if (strcmp(word, "</s>") == 0 && p!=0)
+             //if (fgetc(fin)=='\n' && p!=0)
+            {
+                //printf("\n------------\n");
+                p = 0;
+                n = n + 1;
+            }
+        }
+
+	for (int i = 0; i < np; i++)
+    {
+        
+        phrase[i].nm = phrase[i].nm - 1;
+
+    } 
+    /* for (int i = 0; i < np; i++)
+    {
+        
+        printf("%d \n",temp[i]-1);
+
+    } */
+
+    
+}
+
+void ReadWord(char *word, FILE *fin) {
+  int a = 0, ch;
+  while (!feof(fin)) {
+    ch = fgetc(fin);
+    if (ch == 13) continue;
+    if ((ch == ' ') || (ch == '\t') || (ch == '\n')) {
+      if (a > 0) {
+        if (ch == '\n') ungetc(ch, fin);
+        break;
+      }
+      if (ch == '\n') {
+        strcpy(word, (char *)"</s>");
+        return;
+      } else continue;
+    }
+    word[a] = ch;
+    a++;
+    if (a >= MAX_STRING - 1) a--;   // Truncate too long words
+  }
+  word[a] = 0;
+}
+
+void alloc_phrase(PHRASE *phrase, int *mpp, int layer1_size, int np){
+		printf("\n-----------0----------\n");
+
+	for (int i = 0; i < np; i++)
+	{
+		printf("\n-----------1----------\n");
+		//phrase[i].w2vec = malloc(sizeof(double *)*mpp[i]);
+		printf("\n-----------2----------\n");
+
+		
+		for (int j = 0; j < mpp[i]; j++)
+		{
+			//phrase[i].w2vec[j] = malloc(sizeof(double)*layer1_size); 
+		}  
+		
+	}
+	
+}
+
+
+int load_target(int *target)
+{
+	int count = 0;
+  	printf("Loading Dataset from dataset/theData.csv ...\n\n");
+	FILE* stream = fopen("./targuet.txt", "r");
+  	if (stream == NULL) {
+    	fprintf(stderr, "Error reading file\n");
+    	return 1;
+  	}
+  	while (fscanf(stream, "%d", &target[count]) == 1) {
+      count = count+1;
+  	}
+	return 0;
+    // Uncomment to display loaded data
+    // for (int i = 0; i < (int)total_samples; i++) {
+    //   printf(" x[%d]:%lf , y[%d]:%lf\n", i,x[i], i,y[i]);
+    // }
 }
