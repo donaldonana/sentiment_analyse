@@ -675,7 +675,7 @@ int main(int argc, char **argv) {
   TrainModel();
   //for (int b = 0; b < layer1_size; b++) printf("%lf ", syn0[1 * layer1_size + b]);
 
-  //int ind = SearchVocab("is");
+  //int ind = SearchVocab("algorithms");
 
   //printf("\n%d\n", ind);
 
@@ -709,7 +709,7 @@ while (1) {
   if ( strcmp(word, "</s>") != 0 )
   {
     int ind = SearchVocab(word);
-    //printf("\n%s\n : ", word);
+    //printf("\n%s--(%d)\n : ", word, ind);
     for (int b = 0; b < layer1_size; b++){
       //printf("%lf ", syn0[ind * layer1_size + b]);
       phrases[n].w2vec[p][b] = syn0[ind * layer1_size + b];
@@ -729,8 +729,10 @@ while (1) {
     
 }
 
-/*for (int i = 0; i < phrases[0].nm; i++)
+for (int i = 0; i < phrases[0].nm; i++)
 {
+  printf("\n");
+
   for (int j = 0; j < layer1_size; j++)
   {
     printf("%lf ", phrases[0].w2vec[i][j]);
@@ -738,14 +740,19 @@ while (1) {
 
   printf("\n\n");
   
+}
+
+/*target = malloc(sizeof(int)*np);
+load_target(target);
+for (int i = 0; i < np; i++)
+{
+  printf("\n %d \n", target[i]);
 }*/
-
-
 
   RNN *rnn = malloc(sizeof(RNN));
 
-  int intputs = layer1_size , hidden = 1 , output = 2;
-  printf("///%d////", intputs);
+  int intputs = layer1_size , hidden = 64 , output = 2;
+  //printf("///%d////", intputs);
   initialize_rnn(rnn, intputs, hidden, output);
   //display_matrix(rnn->Wxh, rnn->input_size, rnn->hidden_size);
 
@@ -759,48 +766,83 @@ while (1) {
   //int target  = 1;
 target = malloc(sizeof(int)*np);
 load_target(target);
-
-
+//double error[2] = {0,0};
+double loss = 0;
+double **last_h;
+double *dl_dy = malloc(sizeof(double)*rnn->output_size);
+int *index = malloc(sizeof(int)*np);
+int id ;
+for (int i = 0; i < np; i++)
+{
+  index[i] = i;
   
+}
   
   //printf("\n-----tout est oki-----\n");
 
-  for (int i = 0; i < 1000; i++)
+for (int i = 0; i < 2000; i++)
   {
+    //loss = 0;
+    randomize(index, np);
 
     for (int j = 0; j < np; j++)
     {
     //forward
-      double **last_h = forward(rnn, phrases[j].w2vec, phrases[j].nm);
-      //printf("\n--->%d\n", j);
-      //double loss = (-1)*log(rnn->y[target[j]]);
-      //printf("log error : %lf", loss);
-      //# Build dL/dy
-      double *dl_dy = malloc(sizeof(double)*rnn->output_size);
-      copy_vect(dl_dy, rnn->y, rnn->output_size);
-      dl_dy[target[j]] = dl_dy[target[j]] - 1 ;
-      //backforward
-      backforward(rnn, dl_dy, last_h, phrases[j].nm);
+        //id = index[j];
+        id = j;
+        //int j = rand() % (np);
+        //printf("\n%d\n",j);
+
+        last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
+        //printf("\n--->%d\n", j);
+        //loss = loss-log(rnn->y[target[0]]);
+        //printf("log error : %lf", loss);
+        //# Build dL/dy
+        copy_vect(dl_dy, rnn->y, rnn->output_size);
+        dl_dy[target[id]] = dl_dy[target[id]] - 1 ;
+      
+        //backforward
+        //printf("\n------%d--b----\n", i);
+
+        backforward(rnn, dl_dy, last_h, phrases[id].nm);
 
       
-      /*for (int k = 0; k < rnn->output_size; k++)
+      //for (int k = 0; k < rnn->output_size; k++)
+      //{
+        //printf("\n %d : %lf", k, rnn->y[k]);
+      //}
+    }
+      
+      
+    //if (1)
+    if (i % 100 == 99)
+    {
+     printf("\n-------------------EPOCH %d----------------\n", i+1);
+      printf("erreur et prediction sur la 1er phrase : \n");
+      forward(rnn, phrases[1].w2vec, phrases[1].nm);
+      loss = (-1)*log(rnn->y[target[1]]);
+      printf("\n log error : %lf \n", loss);
+      for (int k = 0; k < rnn->output_size; k++)
       {
         printf("\n %d : %lf", k, rnn->y[k]);
-      }*/
-    }
-    
-    printf("\n-------------------EPOCH %d----------------\n", i);
-    printf("erreur et prediction sur la 1er phrase : ");
-    forward(rnn, phrases[0].w2vec, phrases[0].nm);
-    double loss = (-1)*log(rnn->y[target[0]]);
-    printf("\n log error : %lf", loss);
-    for (int k = 0; k < rnn->output_size; k++)
-    {
-      printf("\n %d : %lf", k, rnn->y[k]);
+      }
+      printf("\n\n");
+
+      //for (int n = 0; n < rnn->output_size; n++)
+     //{
+        //printf("%lf \n", rnn->by[n]);
+      //}
     }
 
-    
   }
+
+  /*printf("\n--------------------------------------\n");
+  for (int i = 0; i < 6; i++)
+  {
+    int j = rand() % (np+1);
+    printf("\n%d\n",j);
+  }*/
+  
     
 
     //double loss = (-1)*log(rnn->y[target]);

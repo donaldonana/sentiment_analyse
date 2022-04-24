@@ -48,19 +48,20 @@ double **forward(RNN *rnn, double **x, int t_p);
 
 void backforward(RNN *rnn, double *d_y, double **last_h, int t_p);
 
-double **vect_mult(double *a , double *b, int n , int m);
+void vect_mult(double **r, double *a , double *b, int n , int m);
 
 void initialize_mat_zero(double **a, int row, int col);
 
-double **scal_mult_mat(double **a, double scal, int row, int col);
 
-double *scal_mult_vect(double *a, double scal, int n);
+void scal_mult_mat(double **r, double **a, double scal, int row, int col);
 
-double *minus_vect(double *a, double *b, int n);
+void scal_mult_vect(double *r, double *a, double scal, int n);
 
-double **trans_mat(double **a, int row , int col);
+void minus_vect(double *r, double *a, double *b, int n);
 
-double *mat_mul(double* a, double** b, int n, int p);
+void trans_mat(double **r, double **a, int row , int col);
+
+void mat_mul(double *r, double* a, double** b, int n, int p);
 
 double *vect_pow_2(double *a, int n);
 
@@ -68,31 +69,29 @@ double *one_minus_vect(double *a , int n);
 
 double *hadamar_vect(double *a, double *b, int n);
 
-double *softmax(int n, double* input);
+void softmax(double *r, int n, double* input);
 
-double *add_vect(double *a, double *b, int n);
+void add_vect(double *r , double *a, double *b, int n);
 
-double *tan_h(int n, double* input) ;
+void tan_h(double *r ,int n, double* input) ;
 
 void initialize_vect_zero(double *a, int n);
 
 void copy_vect(double *a, double *b , int n);
 
-double **add_matrix(double **a , double **b, int row, int col);
-
-double **minus_matrix(double **a , double **b, int row, int col);
+void add_matrix(double **r, double **a , double **b, int row, int col);
 
 double MSE(double *y_pred , double *y, double n) ;
 
+void minus_matrix(double **r, double **a , double **b, int row, int col);
+
 double **allocate_dynamic_float_matrix(int row, int col);
 
-void deallocate_dynamic_float_matrix(float **matrix, int row);
+void deallocate_dynamic_float_matrix(double **matrix, int row);
 
 void display_matrix(double **a, int row, int col);
 
 void plot_error_iter(double *e) ;
-
-void randomize(int *array, int n) ;
 
 
 void MotsParPhrase(FILE *fin, PHRASE *phrase);
@@ -105,6 +104,8 @@ void ReadWord(char *word, FILE *fin) ;
 void alloc_phrase(PHRASE *phrase, int *mpp, int layer1_size, int np);
 
 int load_target(int *target);
+
+void randomize(int *array, int n); 
 
 
 #endif

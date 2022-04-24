@@ -77,8 +77,8 @@ class RNN:
 	      d_h = self.Whh @ temp
 
 	    # Clip to prevent exploding gradients.
-	    for d in [d_Wxh, d_Whh, d_Why, d_bh, d_by]:
-	      np.clip(d, -1, 1, out=d)
+	    #for d in [d_Wxh, d_Whh, d_Why, d_bh, d_by]:
+	      #np.clip(d, -1, 1, out=d)
 
 	    # Update weights and biases using gradient descent.
 	    self.Whh -= learn_rate * d_Whh
@@ -162,18 +162,38 @@ global rnn
 rnn = RNN(vocab_size, 2)
 
 # Training loop
+for epoch in range(1000):
+  # print("---")
+  train_loss, train_acc = processData(train_data)
+
+  if epoch % 100 == 99:
+    print('--- Epoch %d' % (epoch + 1))
+    print('Train:\tLoss %.3f | Accuracy: %.3f' % (train_loss, train_acc))
+
+    test_loss, test_acc = processData(test_data, backprop=False)
+    print('Test:\tLoss %.3f | Accuracy: %.3f' % (test_loss, test_acc))
 
 
 
 
 
-
-
+pickle.dump(rnn, open("rnn_sentiment_analyse.pkl", "wb"))
 
 print("-----------------------------------------end-----------------------------")
 
-loaded_model = pickle.load(open("rnn_sentiment_analyse.pkl" , "rb"))
-inputs = createInputs("i am happy")
-print(inputs)
- 	
+# loaded_model = pickle.load(open("rnn_sentiment_analyse.pkl" , "rb"))
 
+# inputs = createInputs("bad")
+
+# out, _ = loaded_model.forward(inputs)
+# probs = softmax(out)
+
+# print(probs)
+# print(bool(np.argmax(probs)))
+
+# for cle, valeur in train_data.items():
+
+# 	inputs = createInputs(cle)
+# 	out, _ = loaded_model.forward(inputs)
+# 	probs = softmax(out)
+# 	print(cle , ":" , bool(np.argmax(probs) ) )
