@@ -98,7 +98,6 @@ void MotsParPhrase(FILE *fin, PHRASE *phrase);
 
 int NPhrases(FILE *fin);
 
-
 void ReadWord(char *word, FILE *fin) ;
 
 void alloc_phrase(PHRASE *phrase, int *mpp, int layer1_size, int np);
@@ -106,6 +105,8 @@ void alloc_phrase(PHRASE *phrase, int *mpp, int layer1_size, int np);
 int load_target(int *target);
 
 void randomize(int *array, int n); 
+
+void *RnnTraining(void * thread_id);
 
 
 #endif
