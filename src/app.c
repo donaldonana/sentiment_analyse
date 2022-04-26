@@ -780,12 +780,14 @@ for (int i = 0; i < np; i++)
   
   //printf("\n-----tout est oki-----\n");
 
-for (int i = 0; i < 2000; i++)
+	clock_t begin = clock();
+
+for (int i = 0; i < 1000; i++)
   {
     //loss = 0;
     randomize(index, np);
 
-    for (int j = 0; j < np; j++)
+    for (int j = 0; j < 20; j++)
     {
     //forward
         //id = index[j];
@@ -835,6 +837,12 @@ for (int i = 0; i < 2000; i++)
     }
 
   }
+
+  clock_t end = clock();
+  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+  printf("\n\t FINAL ERROR : %lf \n", loss);
+  printf("\n\t FULL EXECUTION TIME: %lf \n", time_spent);
 
   /*printf("\n--------------------------------------\n");
   for (int i = 0; i < 6; i++)
