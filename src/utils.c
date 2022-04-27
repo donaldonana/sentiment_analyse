@@ -37,9 +37,10 @@ double **forward(RNN *rnn, double **x, int t_p)
 		tan_h(h, rnn->hidden_size, temp3);
 		
 	}
-
 	mat_mul(temp6 , h, rnn->Wyh, rnn->hidden_size, rnn->output_size);
 	add_vect(temp6 , temp6, rnn->by, rnn->output_size);
+	//printf("\n---------bon----------\n");
+
 	softmax(rnn->y , rnn->output_size, temp6);
 
 	free(h);

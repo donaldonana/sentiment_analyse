@@ -12,7 +12,7 @@
 #define MAX_EXP 6
 #define MAX_SENTENCE_LENGTH 1000
 #define MAX_CODE_LENGTH 40
-#define MAX_THREADS 1
+#define MAX_THREADS 6
 
 pthread_mutex_t mutex_compteur ;
 RNN *rnn;
@@ -20,6 +20,7 @@ PHRASE *phrases;
 int *target;
 int np ;
 int bacht_s ;
+int iteration;
 
 struct thread_param {
 
@@ -772,6 +773,10 @@ for (int i = 0; i < phrases[0].nm; i++)
   //display_matrix(rnn->Wxh, rnn->input_size, rnn->hidden_size);
 
 
+  if (MAX_THREADS != 1)
+  {
+    iteration = 1000/MAX_THREADS + 250;
+  }
   pthread_attr_t attr ;
   void * status ;
   pthread_t threads [ MAX_THREADS ];
@@ -800,7 +805,7 @@ for (int i = 0; i < phrases[0].nm; i++)
 
       //t_thread_param[i].phrases = phrases;
       rc  = pthread_create(&threads[i] , &attr, RnnTraining ,(void *)indx[i] ) ;
-      printf("\n--------------b-----------------\n");
+      //printf("\n--------------b-----------------\n");
 
       if (rc) {
       printf("ERROR; return code from pthread_create() is %d\n", rc);
@@ -886,9 +891,11 @@ void *RnnTraining(void *thread_idx)
   //printf("\n ***%d*** \n ", k);
 
 			//forward
-      // 1) Tentative de verrouillage de la variable mutex
+     
+     // 1) Tentative de verrouillage de la variable mutex
       r = pthread_mutex_lock(&mutex_compteur) ;
       if (r!=0) { perror ("ERREUR pthread_mutex_lock()" ) ; exit ( EXIT_FAILURE ) ;}
+
 			last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
 			//loss = loss-log(rnn->y[target[0]]);
 			//printf("log error : %lf", loss);
@@ -934,14 +941,16 @@ void *RnnTraining(void *thread_idx)
 void ind(long *v, int np, int nthreads){
 
   int q = 0 ;
+  int m = 0;
   int bacht_size = np / nthreads ;
   for (int i = 0; i < nthreads; i++)
   {
-    v[i] = q;
+    v[i] = m;
     q = 0;
     while ( q < (bacht_size) )
     {
       q = q + 1;
+      m = m + 1;
     }
     
   }
