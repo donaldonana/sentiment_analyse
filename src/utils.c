@@ -444,7 +444,28 @@ void copy_vect(double *a, double *b , int n)
 	
 }
 
+PHRASE **BuildBacht(PHRASE *phrase, int np, int nthreads)
+{
+	int bacht_size = np / nthreads;
+	PHRASE **finals = malloc(sizeof(PHRASE *)*bacht_size);
+	for (int i = 0; i < nthreads; i++)
+	{
+		finals[i] = malloc(sizeof(phrase)*bacht_size);
+	}
+	
 
+	for (int i = 0; i < nthreads; i++)
+	{
+		for (int j = 0; j < bacht_size; j++)
+		{
+			finals[i][j] = phrase[j];
+		}
+		
+	}
+
+	return finals;
+	
+}
 //====================================================
 
 

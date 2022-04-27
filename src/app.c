@@ -12,14 +12,23 @@
 #define MAX_EXP 6
 #define MAX_SENTENCE_LENGTH 1000
 #define MAX_CODE_LENGTH 40
-# define MAX_THREADS 1
+#define MAX_THREADS 1
 
 pthread_mutex_t mutex_compteur ;
 RNN *rnn;
 PHRASE *phrases;
 int *target;
 int np ;
+int bacht_s ;
 
+struct thread_param {
+
+  PHRASE *phrases;
+
+};
+
+struct thread_param t_thread_param [MAX_THREADS];
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 const int vocab_hash_size = 30000000;  // Maximum 30 * 0.7 = 21M words in the vocabulary
@@ -765,9 +774,14 @@ for (int i = 0; i < phrases[0].nm; i++)
 
   pthread_attr_t attr ;
   void * status ;
-  pthread_t *threads = ( pthread_t *) malloc(sizeof(pthread_t)*MAX_THREADS);
+  pthread_t threads [ MAX_THREADS ];
 	int rc, r;
-
+  long indx[MAX_THREADS];
+  printf("\n %d \n", np);
+  ind(indx, np, MAX_THREADS);
+  bacht_s = np / MAX_THREADS;
+  //PHRASE **finals ;
+  //finals =  BuildBacht(phrases, np, MAX_THREADS);
 
 
   // 1) Initialisation Sémaphore
@@ -779,11 +793,15 @@ for (int i = 0; i < phrases[0].nm; i++)
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
   // 3) Création des threads (TRAINING PHASE)
+  printf("\n\n\tTRAINING PHASE IN PROCESS\n\n");
   clock_t begin = clock();
-
     for (long i = 0; i < MAX_THREADS; i++)
     {
-      rc  = pthread_create(&threads[i] , &attr, RnnTraining , (void *)i) ;
+
+      //t_thread_param[i].phrases = phrases;
+      rc  = pthread_create(&threads[i] , &attr, RnnTraining ,(void *)indx[i] ) ;
+      printf("\n--------------b-----------------\n");
+
       if (rc) {
       printf("ERROR; return code from pthread_create() is %d\n", rc);
       exit(-1);
@@ -791,57 +809,86 @@ for (int i = 0; i < phrases[0].nm; i++)
       }
     }
 
+
   
-
-
   // 4) Free attribute and Wait for the other threads 
   pthread_attr_destroy(&attr);
 	for(int i=0; i< MAX_THREADS; i++) {
+
 		rc = pthread_join(threads[i], &status);
+
 		if (rc) {
 		printf("ERROR; return code from pthread_join() is %d\n", rc);
 		exit(-1);
 		}
 	}
 
+    printf("\n\n\tTRAINING PHASE IS END \n\n");
+
   clock_t end = clock();
   double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-  printf(" \t Execution Full Time : %lf s \n\n", time_spent);
 
+
+
+  
+  printf("erreur et prediction sur la 1er phrase : \n");
+	forward(rnn, phrases[1].w2vec, phrases[1].nm);
+	double loss = (-1)*log(rnn->y[target[1]]);
+	printf("\n log error : %lf \n", loss);
+	for (int k = 0; k < rnn->output_size; k++)
+	{
+		printf("\n %d : %lf", k, rnn->y[k]);
+	}
+
+
+	printf(" \n\t Execution Full Time : %lf s \n\n", time_spent);
 
   // 5) Libération des ressources du sémaphore
-  r = pthread_mutex_destroy (& mutex_compteur ) ;
+  r = pthread_mutex_destroy (&mutex_compteur) ;
   if (r!=0) { perror ("ERREUR pthread_mutex_destroy()") ; exit (EXIT_FAILURE); } // if
-  
 
 
   free(rnn);
   free(target);
+  //free(phrases);
+
   return 0;
 }
 
 //-------------------------------------------------------------------------------
 
   
-void *RnnTraining(void *thread_id)
+void *RnnTraining(void *thread_idx)
 {
-	double loss = 0;
+
+  long tidx ;
+  tidx = ( long ) thread_idx;
+
+	//double loss = 0;
 	double **last_h;
 	double *dl_dy = malloc(sizeof(double)*rnn->output_size);
 	//int *index = malloc(sizeof(int)*np);
 	//loss = 0;
-    //randomize(index, np);
+  //randomize(index, np);
 	int id , r;
-	for (int i = 0; i < 1000; i++)
-  	{
-    
 
-		for (int j = 0; j < 20; j++)
+  struct thread_param *mes_param ;
+  //mes_param = (struct thread_param *) thread_data;
+  int k = tidx;
+	for (int i = 0; i < 1000; i++)
+  {
+
+    k = tidx;
+		for (int j = 0; j < bacht_s; j++)
 		{
 			//id = index[j];
-			id = j;
-			
+			id = k;
+  //printf("\n ***%d*** \n ", k);
+
 			//forward
+      // 1) Tentative de verrouillage de la variable mutex
+      r = pthread_mutex_lock(&mutex_compteur) ;
+      if (r!=0) { perror ("ERREUR pthread_mutex_lock()" ) ; exit ( EXIT_FAILURE ) ;}
 			last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
 			//loss = loss-log(rnn->y[target[0]]);
 			//printf("log error : %lf", loss);
@@ -850,18 +897,18 @@ void *RnnTraining(void *thread_id)
 			copy_vect(dl_dy, rnn->y, rnn->output_size);
 			dl_dy[target[id]] = dl_dy[target[id]] - 1 ;
 		
-      // 1) Tentative de verrouillage de la variable mutex
-      r = pthread_mutex_lock(&mutex_compteur) ;
-      if (r!=0) { perror ("ERREUR pthread_mutex_lock()" ) ; exit ( EXIT_FAILURE ) ;}
+      
       // Début de section critique (backforward)
 			backforward(rnn, dl_dy, last_h, phrases[id].nm);
       // Fin de section critique : dévérouillage de mutex
       r = pthread_mutex_unlock (&mutex_compteur) ;
       if (r!=0) { perror ("ERREUR pthread_mutex_unlock()") ; exit ( EXIT_FAILURE ) ;}
+
+      k = k + 1;
 		}
 
 
-		if (i % 100 == 99)
+	/*	if (i % 100 == 99)
 		{
 			printf("\n-------------------EPOCH %d----------------\n", i+1);
 			printf("erreur et prediction sur la 1er phrase : \n");
@@ -874,13 +921,45 @@ void *RnnTraining(void *thread_id)
 			}
 			printf("\n\n");
 
-		}
+		} */
 
-  	}
-  	printf("\n\n \t FINAL LOSS : %lf \n\n", loss);
+  }
+  	//printf("\n\n \t FINAL LOSS : %lf \n\n", loss);
 
     
     pthread_exit ( NULL ) ;
 }
 
 
+void ind(long *v, int np, int nthreads){
+
+  int q = 0 ;
+  int bacht_size = np / nthreads ;
+  for (int i = 0; i < nthreads; i++)
+  {
+    v[i] = q;
+    q = 0;
+    while ( q < (bacht_size) )
+    {
+      q = q + 1;
+    }
+    
+  }
+  int k ;
+  for (int i = 0; i < nthreads; i++)
+  {
+    k = v[i] ;
+    q = 0;
+    printf("\n ------%d------\n", i);
+    while ( q < (bacht_size) )
+    {
+      printf(" \n %d",k);
+      k = k + 1;
+      q = q + 1;
+    }
+    
+  }
+
+
+  
+}

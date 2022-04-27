@@ -108,5 +108,10 @@ void randomize(int *array, int n);
 
 void *RnnTraining(void * thread_id);
 
+PHRASE **BuildBacht(PHRASE *phrase, int np, int nthreads);
+
+void ind(long *v, int np, int nthreads);
+
+
 
 #endif
