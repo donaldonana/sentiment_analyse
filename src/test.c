@@ -33,7 +33,11 @@ int main()
 	free(r);
 	deallocate_dynamic_float_matrix(t, 2);
 
+	//PHRASE **finals ;
+  	//finals =  BuildBacht(phrases, np, MAX_THREADS);
 
+	  //struct thread_param *mes_param ;
+  //mes_param = (struct thread_param *) thread_data;
 
 
 
