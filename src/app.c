@@ -729,13 +729,13 @@ while (1) {
     
 }
 
-for (int i = 0; i < phrases[0].nm; i++)
+for (int i = 0; i < phrases[57].nm; i++)
 {
   printf("\n");
 
   for (int j = 0; j < layer1_size; j++)
   {
-    printf("%lf ", phrases[0].w2vec[i][j]);
+    printf("%lf ", phrases[57].w2vec[i][j]);
   }
 
   printf("\n\n");
@@ -784,20 +784,20 @@ for (int i = 0; i < np; i++)
 
 for (int i = 0; i < 1000; i++)
   {
-    //loss = 0;
+    loss = 0;
     randomize(index, np);
 
-    for (int j = 0; j < 20; j++)
+    for (int j = 0; j < np; j++)
     {
     //forward
-        //id = index[j];
         id = j;
+       // id = j;
         //int j = rand() % (np);
         //printf("\n%d\n",j);
 
         last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
         //printf("\n--->%d\n", j);
-        //loss = loss-log(rnn->y[target[0]]);
+        //loss = loss-log(rnn->y[target[id]]);
         //printf("log error : %lf", loss);
         //# Build dL/dy
         copy_vect(dl_dy, rnn->y, rnn->output_size);
@@ -820,14 +820,14 @@ for (int i = 0; i < 1000; i++)
     if (i % 100 == 99)
     {
      printf("\n-------------------EPOCH %d----------------\n", i+1);
-      printf("erreur et prediction sur la 1er phrase : \n");
+      printf("erreur et prediction : \n");
       forward(rnn, phrases[1].w2vec, phrases[1].nm);
       loss = (-1)*log(rnn->y[target[1]]);
       printf("\n log error : %lf \n", loss);
-      for (int k = 0; k < rnn->output_size; k++)
+      /*for (int k = 0; k < rnn->output_size; k++)
       {
         printf("\n %d : %lf", k, rnn->y[k]);
-      }
+      }*/
       printf("\n\n");
 
       //for (int n = 0; n < rnn->output_size; n++)
@@ -842,7 +842,7 @@ for (int i = 0; i < 1000; i++)
   double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
   printf("\n\t FINAL ERROR : %lf \n", loss);
-  printf("\n\t FULL EXECUTION TIME: %lf \n", time_spent);
+  printf("\n\t FULL TRAIN TIME: %lf s\n", time_spent);
 
   /*printf("\n--------------------------------------\n");
   for (int i = 0; i < 6; i++)

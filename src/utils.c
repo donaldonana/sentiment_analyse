@@ -118,7 +118,6 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 
 	//Update weights and biases using gradient descent.
 
-	free(temp); temp = NULL;
 
 	
 	scal_mult_mat(d_Whh, d_Whh, 0.02, rnn->hidden_size, rnn->hidden_size);
@@ -142,12 +141,10 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 
 	scal_mult_vect(d_bh, d_bh, 0.02, rnn->hidden_size);
 	minus_vect(rnn->bh ,rnn->bh, d_bh , rnn->hidden_size);
-	free(temp); temp = NULL;
 	//printf("\n---------------Bonjour----------\n");
 
 	scal_mult_vect(d_by, d_by, 0.02, rnn->output_size);
 	minus_vect(rnn->by, rnn->by, d_by, rnn->output_size);
-	free(temp); temp = NULL;
 
 	deallocate_dynamic_float_matrix(d_Whh, rnn->hidden_size);
 	deallocate_dynamic_float_matrix(donald1, rnn->hidden_size);
@@ -158,7 +155,7 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 
 	//deallocate_dynamic_float_matrix(last_h, t_p);
 
-
+	free(temp); temp = NULL;
 	free(d_bh);
 	free(d_by);
 	free(temp2);
