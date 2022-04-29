@@ -28,6 +28,7 @@ char save_vocab_file[MAX_STRING], read_vocab_file[MAX_STRING];
 struct vocab_word *vocab;
 int binary = 0, cbow = 1, debug_mode = 2, window = 5, min_count = 5, num_threads = 12, min_reduce = 1;
 int *vocab_hash;
+double *hotvect ;
 long long vocab_max_size = 1000, vocab_size = 0, layer1_size = 100;
 long long train_words = 0, word_count_actual = 0, iter = 5, file_size = 0, classes = 0;
 real alpha = 0.025, starting_alpha, sample = 1e-3;
@@ -596,6 +597,33 @@ int ArgPos(char *str, int argc, char **argv) {
 }
 
 
+void OneHot(){
+
+  long a, b;
+  hotvect = malloc(sizeof(double)*vocab_size*vocab_size);
+  initialize_vect_zero(hotvect, vocab_size*vocab_size);
+  FILE *file;
+  file = fopen("OneHot.txt", "w+");
+  for (a = 0; a < vocab_size; a++) {
+      fprintf(file,"(%s   %ld) ", vocab[a].word, a);
+      
+      for (b = 0; b < vocab_size; b++){
+          if (a == b)
+          {
+            hotvect[a * vocab_size + b] = 1;
+          }
+          
+          fprintf(file, "%lf ", hotvect[a * vocab_size + b]);
+      } 
+      fprintf(file,"\n");
+
+    }
+
+    printf("\n\n -----end of one hot encoding -----\n\n");
+    
+}
+
+
 
 int main(int argc, char **argv) {
 
@@ -673,7 +701,9 @@ int main(int argc, char **argv) {
     expTable[i] = expTable[i] / (expTable[i] + 1);                   // Precompute f(x) = x / (x + 1)
   }
   TrainModel();
-  //for (int b = 0; b < layer1_size; b++) printf("%lf ", syn0[1 * layer1_size + b]);
+  OneHot();
+
+  for (int b = 0; b < vocab_size; b++) printf("%lf ", hotvect[1 * vocab_size + b]);
 
   //int ind = SearchVocab("algorithms");
 
@@ -689,7 +719,7 @@ MotsParPhrase(fin, phrases);
 for (int i = 0; i < np; i++)
 {
   //printf("\n %d \n",  phrases[i].nm );
-  phrases[i].w2vec = allocate_dynamic_float_matrix(phrases[i].nm, layer1_size);
+  phrases[i].w2vec = allocate_dynamic_float_matrix(phrases[i].nm, vocab_size);
   //double **v;
 }
 
@@ -710,9 +740,9 @@ while (1) {
   {
     int ind = SearchVocab(word);
     //printf("\n%s--(%d)\n : ", word, ind);
-    for (int b = 0; b < layer1_size; b++){
-      //printf("%lf ", syn0[ind * layer1_size + b]);
-      phrases[n].w2vec[p][b] = syn0[ind * layer1_size + b];
+    for (int b = 0; b < vocab_size; b++){
+      //printf("%lf ", hotvect[ind * vocab_size + b]);
+      phrases[n].w2vec[p][b] = hotvect[ind * vocab_size + b];
     } 
     //printf("\n\n");
     //phrases[n].w2vec[p] = mot;
@@ -729,13 +759,13 @@ while (1) {
     
 }
 
-for (int i = 0; i < phrases[57].nm; i++)
+for (int i = 0; i < phrases[0].nm; i++)
 {
   printf("\n");
 
-  for (int j = 0; j < layer1_size; j++)
+  for (int j = 0; j < vocab_size; j++)
   {
-    printf("%lf ", phrases[57].w2vec[i][j]);
+    printf("%lf ", phrases[0].w2vec[i][j]);
   }
 
   printf("\n\n");
@@ -751,7 +781,7 @@ for (int i = 0; i < np; i++)
 
   RNN *rnn = malloc(sizeof(RNN));
 
-  int intputs = layer1_size , hidden = 64 , output = 2;
+  int intputs = vocab_size , hidden = 64 , output = 2;
   //printf("///%d////", intputs);
   initialize_rnn(rnn, intputs, hidden, output);
   //display_matrix(rnn->Wxh, rnn->input_size, rnn->hidden_size);
@@ -780,6 +810,9 @@ for (int i = 0; i < np; i++)
   
   //printf("\n-----tout est oki-----\n");
 
+
+
+
 clock_t begin = clock();
 
 for (int i = 0; i < 1000; i++)
@@ -794,7 +827,7 @@ for (int i = 0; i < 1000; i++)
        // id = j;
         //int j = rand() % (np);
         //printf("\n%d\n",j);
-
+        
         last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
         //printf("\n--->%d\n", j);
         //loss = loss-log(rnn->y[target[id]]);
@@ -821,13 +854,15 @@ for (int i = 0; i < 1000; i++)
     {
      printf("\n-------------------EPOCH %d----------------\n", i+1);
       printf("erreur et prediction : \n");
-      forward(rnn, phrases[1].w2vec, phrases[1].nm);
-      loss = (-1)*log(rnn->y[target[1]]);
+      forward(rnn, phrases[4].w2vec, phrases[4].nm);
+      loss = (-1)*log(rnn->y[target[4]]);
+      printf("target : %d \n", target[4]);
+
       printf("\n log error : %lf \n", loss);
-      /*for (int k = 0; k < rnn->output_size; k++)
+      for (int k = 0; k < rnn->output_size; k++)
       {
         printf("\n %d : %lf", k, rnn->y[k]);
-      }*/
+      }
       printf("\n\n");
 
       //for (int n = 0; n < rnn->output_size; n++)
@@ -844,12 +879,12 @@ for (int i = 0; i < 1000; i++)
   printf("\n\t FINAL ERROR : %lf \n", loss);
   printf("\n\t FULL TRAIN TIME: %lf s\n", time_spent);
 
-  /*printf("\n--------------------------------------\n");
-  for (int i = 0; i < 6; i++)
-  {
-    int j = rand() % (np+1);
-    printf("\n%d\n",j);
-  }*/
+  //printf("\n--------------------------------------\n");
+  //for (int i = 0; i < 6; i++)
+  //{
+    //int j = rand() % (np+1);
+    //printf("\n%d\n",j);
+  //}
   
     
 
@@ -869,7 +904,8 @@ for (int i = 0; i < 1000; i++)
 
   }
   
-  printf("\n-----tout est oki-----\n");*/
+  printf("\n-----tout est oki-----\n");
+  */
 
   return 0;
 }

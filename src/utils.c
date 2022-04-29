@@ -29,6 +29,12 @@ double **forward(RNN *rnn, double **x, int t_p)
 	for (int i = 0; i < t_p; i++)
 	{
 		//h = np.tanh(self.Wxh @ x + self.Whh @ h + self.bh)
+		//printf("\n\n");
+		//for (int p = 0; p < rnn->input_size; p++)
+		//{
+			//printf("%lf \n", x[i][p]);
+		//}
+		
 		mat_mul(temp1 , x[i], rnn->Wxh, rnn->input_size, rnn->hidden_size);
 		mat_mul(temp2 , hs[i], rnn->Whh, rnn->hidden_size, rnn->hidden_size);
 		add_vect(temp3 ,temp1, temp2, rnn->hidden_size);
@@ -108,6 +114,11 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 		add_matrix(d_Whh , d_Whh, donald1 , rnn->hidden_size, rnn->hidden_size);
 
 		//dL/dWxh = dL/dh * (1 - h^2) * x
+		/*printf("\n\n");
+		for (int p = 0; p < rnn->input_size; p++)
+		{
+			printf("%lf \n", rnn->last_intput[i][p]);
+		}*/
 		vect_mult(donald2, temp, rnn->last_intput[i], rnn->hidden_size, rnn->input_size );
 		add_matrix(d_Wxh , d_Wxh, donald2, rnn->hidden_size, rnn->input_size);
 
