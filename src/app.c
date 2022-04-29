@@ -614,6 +614,21 @@ int ArgPos(char *str, int argc, char **argv) {
   return -1;
 }
 
+void OneHot(){
+
+  long a, b, c, d;
+  double *hotvect = malloc(sizeof(double)*vocab_size*vocab_size);
+  initialize_vect_zero(hotvect, vocab_size*vocab_size);
+
+  for (a = 0; a < vocab_size; a++) {
+      printf("(%s   %ld) ", vocab[a].word, a);
+      
+      for (b = 0; b < vocab_size; b++) printf("%lf ", hotvect[a * vocab_size + b]);
+      printf("\n");
+    }
+    
+}
+
 
 
 int main(int argc, char **argv) {
@@ -904,8 +919,8 @@ for (int i = 0; i < phrases[0].nm; i++)
         {
           printf("\n-------------------EPOCH %d----------------\n", i+1);
           //printf("erreur et prediction : \n");
-          forward(rnn, phrases[1].w2vec, phrases[1].nm);
-          loss = (-1)*log(rnn->y[target[1]]);
+          forward(rnn, phrases[14].w2vec, phrases[14].nm);
+          loss = (-1)*log(rnn->y[target[14]]);
           printf("\n log error : %lf \n", loss);
           /*for (int k = 0; k < rnn->output_size; k++)
           {

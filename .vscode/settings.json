@@ -3,6 +3,7 @@
         "time.h": "c",
         "stdlib.h": "c",
         "string.h": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "pthread.h": "c"
     }
 }
