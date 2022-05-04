@@ -669,7 +669,7 @@ int main(int argc, char **argv) {
     printf("\t-cbow <int>\n");
     printf("\t\tUse the continuous bag of words model; default is 1 (use 0 for skip-gram model)\n");
     printf("\nExamples:\n");
-    printf("./word2vec -train data.txt -output vec.txt -size 200 -window 5 -sample 1e-4 -negative 5 -hs 0 -binary 0 -cbow 1 -iter 3\n\n");
+    printf("./word2vec -train data.txt -output vec.txt -size 200 -window 5 -sample 1e-0 -negative 5 -hs 0 -binary 0 -cbow 1 -iter 3\n\n");
     return 0;
   }
   output_file[0] = 0;
@@ -781,7 +781,7 @@ for (int i = 0; i < np; i++)
 
   RNN *rnn = malloc(sizeof(RNN));
 
-  int intputs = vocab_size , hidden = 64 , output = 2;
+  int intputs = vocab_size , hidden = 4 , output = 2;
   //printf("///%d////", intputs);
   initialize_rnn(rnn, intputs, hidden, output);
   //display_matrix(rnn->Wxh, rnn->input_size, rnn->hidden_size);
@@ -798,7 +798,6 @@ target = malloc(sizeof(int)*np);
 load_target(target);
 //double error[2] = {0,0};
 double loss = 0;
-double **last_h;
 double *dl_dy = malloc(sizeof(double)*rnn->output_size);
 int *index = malloc(sizeof(int)*np);
 int id ;
@@ -815,6 +814,8 @@ for (int i = 0; i < np; i++)
 
 clock_t begin = clock();
 
+
+
 for (int i = 0; i < 1000; i++)
   {
     loss = 0;
@@ -824,13 +825,12 @@ for (int i = 0; i < 1000; i++)
     {
     //forward
         id = j;
-       // id = j;
         //int j = rand() % (np);
         //printf("\n%d\n",j);
         
-        last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
+        forward(rnn,  phrases[id].w2vec, phrases[id].nm);
         //printf("\n--->%d\n", j);
-        //loss = loss-log(rnn->y[target[id]]);
+        loss = loss-log(rnn->y[target[id]]);
         //printf("log error : %lf", loss);
         //# Build dL/dy
         copy_vect(dl_dy, rnn->y, rnn->output_size);
@@ -839,8 +839,9 @@ for (int i = 0; i < 1000; i++)
         //backforward
         //printf("\n------%d--b----\n", i);
 
-        backforward(rnn, dl_dy, last_h, phrases[id].nm);
+        backforward(rnn, dl_dy, phrases[id].nm);
 
+        //display_matrix(rnn->Wyh, rnn->output_size, rnn->hidden_size);
       
       //for (int k = 0; k < rnn->output_size; k++)
       //{
@@ -852,13 +853,13 @@ for (int i = 0; i < 1000; i++)
     //if (1)
     if (i % 100 == 99)
     {
-     printf("\n-------------------EPOCH %d----------------\n", i+1);
-      printf("erreur et prediction : \n");
-      forward(rnn, phrases[4].w2vec, phrases[4].nm);
-      loss = (-1)*log(rnn->y[target[4]]);
-      printf("target : %d \n", target[4]);
-
-      printf("\n log error : %lf \n", loss);
+      printf("\n-------------------EPOCH %d----------------\n", i+1);
+      printf(" Train Mean Log Error : %lf \n", loss/np);
+      //forward(rnn, phrases[58].w2vec, phrases[58].nm);
+      //loss = (-1)*log(rnn->y[target[58]]);
+      printf("\n Test sur La Derniére Phrase : \n");
+      printf(" target : %d \n", target[58]);
+      //printf(" nombre mots : %d ", phrases[58].nm);
       for (int k = 0; k < rnn->output_size; k++)
       {
         printf("\n %d : %lf", k, rnn->y[k]);
@@ -876,8 +877,7 @@ for (int i = 0; i < 1000; i++)
   clock_t end = clock();
   double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-  printf("\n\t FINAL ERROR : %lf \n", loss);
-  printf("\n\t FULL TRAIN TIME: %lf s\n", time_spent);
+  printf("\n\t ********* FULL TRAIN TIME: %lf s *********\n\n", time_spent);
 
   //printf("\n--------------------------------------\n");
   //for (int i = 0; i < 6; i++)

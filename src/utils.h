@@ -29,6 +29,7 @@ struct RNN
 	//vecteur de poid couche cachée et couche de sortie (neurons X outputs)
 	double **Wyh;
     double **last_intput;
+	double **last_hs;
 	double *bh;
 	double *by;
 	double *y ;
@@ -44,9 +45,9 @@ void initialize_rnn(RNN *rnn, int input_size, int hidden_size, int output_size);
 
 void randomly_initalialize_mat(double **a, int row, int col);
 
-double **forward(RNN *rnn, double **x, int t_p);
+void forward(RNN *rnn, double **x, int t_p);
 
-void backforward(RNN *rnn, double *d_y, double **last_h, int t_p);
+void backforward(RNN *rnn, double *d_y, int t_p);
 
 void vect_mult(double **r, double *a , double *b, int n , int m);
 

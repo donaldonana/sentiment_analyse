@@ -10,18 +10,21 @@
 
 
 //tp: taille de la phrase (nombre de mots)
-double **forward(RNN *rnn, double **x, int t_p)
+void forward(RNN *rnn, double **x, int t_p)
 {
 	//self.last_inputs = inputs
-	double **hs = allocate_dynamic_float_matrix(t_p+1, rnn->hidden_size);
+	//double **hs = allocate_dynamic_float_matrix(t_p+1, rnn->hidden_size);
 	double *h = malloc(sizeof(double)*rnn->hidden_size);
 	initialize_vect_zero(h, rnn->hidden_size);
-	copy_vect(hs[0], h, rnn->hidden_size);
+	copy_vect(rnn->last_hs[0], h, rnn->hidden_size);
 	rnn->last_intput = x;
-	double *temp1, *temp2, *temp3, *temp6;
+	double *temp1, *temp2, *temp3, *temp4, *temp5, *temp6;
 	temp3 = malloc(sizeof(double)*rnn->hidden_size);
 	temp6 = malloc(sizeof(double)*rnn->output_size);
 	temp2 = malloc(sizeof(double)*rnn->hidden_size);
+	temp4 = malloc(sizeof(double)*rnn->hidden_size);
+	temp5 = malloc(sizeof(double)*rnn->output_size);
+
 	temp1 = malloc(sizeof(double)*rnn->hidden_size);
 
 
@@ -36,23 +39,25 @@ double **forward(RNN *rnn, double **x, int t_p)
 		//}
 		
 		mat_mul(temp1 , x[i], rnn->Wxh, rnn->input_size, rnn->hidden_size);
-		mat_mul(temp2 , hs[i], rnn->Whh, rnn->hidden_size, rnn->hidden_size);
+		mat_mul(temp2 , rnn->last_hs[i], rnn->Whh, rnn->hidden_size, rnn->hidden_size);
 		add_vect(temp3 ,temp1, temp2, rnn->hidden_size);
-		add_vect(temp3, temp3, rnn->bh, rnn->hidden_size);
-		tan_h(hs[i+1], rnn->hidden_size, temp3);
-		tan_h(h, rnn->hidden_size, temp3);
+		add_vect(temp4, temp3, rnn->bh, rnn->hidden_size);
+		tan_h(rnn->last_hs[i+1], rnn->hidden_size, temp4);
+		tan_h(h, rnn->hidden_size, temp4);
 		
 	}
 
-	mat_mul(temp6 , h, rnn->Wyh, rnn->hidden_size, rnn->output_size);
-	add_vect(temp6 , temp6, rnn->by, rnn->output_size);
+	mat_mul(temp5 , h, rnn->Wyh, rnn->hidden_size, rnn->output_size);
+	add_vect(temp6 , temp5, rnn->by, rnn->output_size);
+	
 	softmax(rnn->y , rnn->output_size, temp6);
+	
 
-	free(h);
-	free(temp1);
-	free(temp2);
-	free(temp3);
-	free(temp6);
+	//free(h);
+	//free(temp1);
+	//free(temp2);
+	//free(temp3);
+	//free(temp6);
 
 	//free(temp4);
 	//free(temp5);
@@ -60,11 +65,11 @@ double **forward(RNN *rnn, double **x, int t_p)
 	
 
 
-	return hs;
+
 	
 }
 
-void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
+void backforward(RNN *rnn, double *d_y,int t_p)
 {
 
 	double *temp1;
@@ -74,12 +79,9 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 	double **donald2 = allocate_dynamic_float_matrix(rnn->hidden_size, rnn->input_size);
 	// Calculate dL/dWhy and dL/dby.
     double *d_by = malloc(sizeof(double)*rnn->output_size);
-
 	copy_vect(d_by, d_y, rnn->output_size);
-	
 	double **d_Why = allocate_dynamic_float_matrix(rnn->output_size, rnn->hidden_size);
-
-	vect_mult(d_Why, d_y, last_h[t_p], rnn->output_size, rnn->hidden_size);
+	vect_mult(d_Why, d_y, rnn->last_hs[t_p], rnn->output_size, rnn->hidden_size);
 
 	// Initialize dL/dWhh, dL/dWxh, and dL/dbh to zero.
 	double **d_Whh = allocate_dynamic_float_matrix(rnn->hidden_size, rnn->hidden_size);
@@ -101,7 +103,7 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 
 	for (int i = t_p-1; i >= 0; i--)
 	{
-		temp1 = vect_pow_2(last_h[i+1], rnn->hidden_size);
+		temp1 = vect_pow_2(rnn->last_hs[i+1], rnn->hidden_size);
 		temp2 = one_minus_vect(temp1, rnn->hidden_size);
 		temp = hadamar_vect(d_h, temp2, rnn->hidden_size);
 
@@ -110,7 +112,7 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 		add_vect(d_bh, d_bh, temp, rnn->hidden_size);
 
 		//dL/dWhh = dL/dh * (1 - h^2) * h_{t-1}
-		vect_mult(donald1, temp, last_h[i], rnn->hidden_size, rnn->hidden_size);
+		vect_mult(donald1, temp, rnn->last_hs[i], rnn->hidden_size, rnn->hidden_size);
 		add_matrix(d_Whh , d_Whh, donald1 , rnn->hidden_size, rnn->hidden_size);
 
 		//dL/dWxh = dL/dh * (1 - h^2) * x
@@ -131,19 +133,19 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 
 
 	
-	scal_mult_mat(d_Whh, d_Whh, 0.02, rnn->hidden_size, rnn->hidden_size);
+	//scal_mult_mat(d_Whh, d_Whh, 0.02, rnn->hidden_size, rnn->hidden_size);
 
 	minus_matrix(rnn->Whh ,rnn->Whh, d_Whh, rnn->hidden_size, rnn->hidden_size);
 
 	//free(donald); donald = NULL;
 		
 
-	scal_mult_mat(d_Wxh, d_Wxh, 0.02, rnn->hidden_size, rnn->input_size);
+	//scal_mult_mat(d_Wxh, d_Wxh, 0.02, rnn->hidden_size, rnn->input_size);
 	minus_matrix(rnn->Wxh ,rnn->Wxh, d_Wxh,rnn->hidden_size, rnn->input_size);
 	//free(donald); donald = NULL;
 
 
-	scal_mult_mat(d_Why, d_Why, 0.02, rnn->output_size, rnn->hidden_size);
+	//scal_mult_mat(d_Why, d_Why, 0.02, rnn->output_size, rnn->hidden_size);
 
 	minus_matrix(rnn->Wyh ,rnn->Wyh, d_Why , rnn->output_size, rnn->hidden_size);
 	
@@ -174,7 +176,7 @@ void backforward(RNN *rnn, double *d_y, double **last_h, int t_p)
 	free(temp1);
 
 	//free(d_by);
-	free(d_h);
+	free(d_h); 
 	//free(donald);
 
 
@@ -259,15 +261,20 @@ void initialize_rnn(RNN *rnn, int input_size, int hidden_size, int output_size)
 	rnn->output_size = output_size;
 	rnn->Wxh = allocate_dynamic_float_matrix(rnn->hidden_size, rnn->input_size);
 	randomly_initalialize_mat(rnn->Wxh, rnn->hidden_size, rnn->input_size);
+
 	rnn->Whh = allocate_dynamic_float_matrix(rnn->hidden_size, rnn->hidden_size);
 	randomly_initalialize_mat(rnn->Whh, rnn->hidden_size, rnn->hidden_size);
+	
 	rnn->Wyh = allocate_dynamic_float_matrix(rnn->output_size, rnn->hidden_size);
 	randomly_initalialize_mat(rnn->Wyh, rnn->output_size, rnn->hidden_size);
+
 	rnn->bh = malloc(sizeof(double)*rnn->hidden_size);
 	initialize_vect_zero(rnn->bh, rnn->hidden_size);
 	rnn->by = malloc(sizeof(double)*rnn->output_size);
 	initialize_vect_zero(rnn->by, rnn->output_size);
 	rnn->y = malloc(sizeof(double)*rnn->output_size);
+
+	rnn->last_hs = allocate_dynamic_float_matrix(100, rnn->hidden_size);
 
 
 }
@@ -350,7 +357,8 @@ void minus_matrix(double **r, double **a , double **b, int row, int col)
 	{
 		for (int j = 0; j < col; j++)
 		{
-			r[i][j] = a[i][j] - b[i][j];
+			r[i][j] = a[i][j] - (0.02)*b[i][j];
+			//r[i][j] = 0.0;
 
 		}
 		
@@ -572,6 +580,7 @@ void deallocate_dynamic_float_matrix(double **matrix, int row)
 
 void display_matrix(double **a, int row, int col)
 {
+	printf("\n row = %d \t col = %d \n", row, col);
 	for (int i = 0; i < row; i++)
 	{
 		printf("\n");

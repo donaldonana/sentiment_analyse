@@ -7,7 +7,7 @@ import pickle
 
 class RNN:
 	"""docstring for RNN"""
-	def __init__(self, input_size, output_size, hidden_size=64):
+	def __init__(self, input_size, output_size, hidden_size=4):
 		
 		self.Whh = randn(hidden_size, hidden_size) / 1000
 		self.Wxh = randn(hidden_size, input_size) / 1000
@@ -124,7 +124,7 @@ def processData(data, backprop=True):
   - backprop determines if the backward phase should be run.
   '''
   items = list(data.items())
-  random.shuffle(items)
+  #random.shuffle(items)
 
   loss = 0
   num_correct = 0
