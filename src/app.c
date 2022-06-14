@@ -48,7 +48,6 @@ char save_vocab_file[MAX_STRING], read_vocab_file[MAX_STRING];
 struct vocab_word *vocab;
 int binary = 0, cbow = 1, debug_mode = 2, window = 5, min_count = 5, num_threads = 12, min_reduce = 1;
 int *vocab_hash;
-double *hotvect ;
 long long vocab_max_size = 1000, vocab_size = 0, layer1_size = 100;
 long long train_words = 0, word_count_actual = 0, iter = 5, file_size = 0, classes = 0;
 real alpha = 0.025, starting_alpha, sample = 1e-3;
@@ -631,33 +630,6 @@ void OneHot(){
 }
 
 
-void OneHot(){
-
-  long a, b;
-  hotvect = malloc(sizeof(double)*vocab_size*vocab_size);
-  initialize_vect_zero(hotvect, vocab_size*vocab_size);
-  FILE *file;
-  file = fopen("OneHot.txt", "w+");
-  for (a = 0; a < vocab_size; a++) {
-      fprintf(file,"(%s   %ld) ", vocab[a].word, a);
-      
-      for (b = 0; b < vocab_size; b++){
-          if (a == b)
-          {
-            hotvect[a * vocab_size + b] = 1;
-          }
-          
-          fprintf(file, "%lf ", hotvect[a * vocab_size + b]);
-      } 
-      fprintf(file,"\n");
-
-    }
-
-    printf("\n\n -----end of one hot encoding -----\n\n");
-    
-}
-
-
 
 int main(int argc, char **argv) {
 
@@ -707,7 +679,7 @@ int main(int argc, char **argv) {
     printf("\t-pthreads <int>\n");
     printf("\t\t numbers of threads to use in RNNs Training (default 4 and MAX is 16)\n");
     printf("\nExamples:\n");
-    printf("./word2vec -train data.txt -output vec.txt -size 200 -window 5 -sample 1e-0 -negative 5 -hs 0 -binary 0 -cbow 1 -iter 3\n\n");
+    printf("./word2vec -train data.txt -output vec.txt -size 200 -window 5 -sample 1e-4 -negative 5 -hs 0 -binary 0 -cbow 1 -iter 3\n\n");
     return 0;
   }
   output_file[0] = 0;
@@ -741,9 +713,7 @@ int main(int argc, char **argv) {
     expTable[i] = expTable[i] / (expTable[i] + 1);                   // Precompute f(x) = x / (x + 1)
   }
   TrainModel();
-  OneHot();
-
-  for (int b = 0; b < vocab_size; b++) printf("%lf ", hotvect[1 * vocab_size + b]);
+  //for (int b = 0; b < layer1_size; b++) printf("%lf ", syn0[1 * layer1_size + b]);
 
   //int ind = SearchVocab("algorithms");
 
@@ -789,7 +759,7 @@ for (int i = 0; i < phrases[0].nm; i++)
 {
   printf("\n");
 
-  for (int j = 0; j < vocab_size; j++)
+  for (int j = 0; j < layer1_size; j++)
   {
     printf("%lf ", phrases[0].w2vec[i][j]);
   }
@@ -923,7 +893,7 @@ for (int i = 0; i < phrases[0].nm; i++)
             //int j = rand() % (np);
             //printf("\n%d\n",j);
 
-            forward(rnn,  phrases[id].w2vec, phrases[id].nm);
+            last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
             //printf("\n--->%d\n", j);
             //loss = loss-log(rnn->y[target[id]]);
             //printf("log error : %lf", loss);
