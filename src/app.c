@@ -983,7 +983,7 @@ void *RnnTraining(void *thread_idx)
       r = pthread_mutex_lock(&mutex_compteur) ;
       if (r!=0) { perror ("ERREUR pthread_mutex_lock()" ) ; exit ( EXIT_FAILURE ) ;}
 
-		  forward(rnn,  phrases[id].w2vec, phrases[id].nm);
+		  last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
 			//loss = loss-log(rnn->y[target[0]]);
 			//printf("log error : %lf", loss);
 
