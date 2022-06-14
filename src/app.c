@@ -893,7 +893,7 @@ for (int i = 0; i < phrases[0].nm; i++)
             //int j = rand() % (np);
             //printf("\n%d\n",j);
 
-            forward(rnn,  phrases[id].w2vec, phrases[id].nm);
+           last_h =  forward(rnn,  phrases[id].w2vec, phrases[id].nm);
             //printf("\n--->%d\n", j);
             //loss = loss-log(rnn->y[target[id]]);
             //printf("log error : %lf", loss);
