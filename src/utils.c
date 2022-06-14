@@ -69,7 +69,7 @@ void forward(RNN *rnn, double **x, int t_p)
 	
 }
 
-void backforward(RNN *rnn, double *d_y,int t_p)
+void backforward(RNN *rnn, double *d_y, int t_p)
 {
 
 	double *temp1;
@@ -172,11 +172,10 @@ void backforward(RNN *rnn, double *d_y,int t_p)
 	free(d_bh);
 	free(d_by);
 	free(temp2);
-	free(temp);
 	free(temp1);
 
 	//free(d_by);
-	free(d_h); 
+	free(d_h); d_h = NULL;
 	//free(donald);
 
 

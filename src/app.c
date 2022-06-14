@@ -825,7 +825,7 @@ for (int i = 0; i < 1000; i++)
     {
     //forward
         id = j;
-        //int j = rand() % (np);
+        //id = index[j];
         //printf("\n%d\n",j);
         
         forward(rnn,  phrases[id].w2vec, phrases[id].nm);
@@ -847,7 +847,7 @@ for (int i = 0; i < 1000; i++)
       //{
         //printf("\n %d : %lf", k, rnn->y[k]);
       //}
-    }
+    } 
       
       
     //if (1)
