@@ -45,7 +45,7 @@ void initialize_rnn(RNN *rnn, int input_size, int hidden_size, int output_size);
 
 void randomly_initalialize_mat(double **a, int row, int col);
 
-void forward(RNN *rnn, double **x, int t_p);
+double **forward(RNN *rnn, double **x, int t_p);
 
 void backforward(RNN *rnn, double *d_y, double **last_h, int t_p);
 
