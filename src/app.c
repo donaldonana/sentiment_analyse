@@ -893,7 +893,7 @@ for (int i = 0; i < phrases[0].nm; i++)
             //int j = rand() % (np);
             //printf("\n%d\n",j);
 
-            last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
+            forward(rnn,  phrases[id].w2vec, phrases[id].nm);
             //printf("\n--->%d\n", j);
             //loss = loss-log(rnn->y[target[id]]);
             //printf("log error : %lf", loss);
@@ -983,7 +983,7 @@ void *RnnTraining(void *thread_idx)
       r = pthread_mutex_lock(&mutex_compteur) ;
       if (r!=0) { perror ("ERREUR pthread_mutex_lock()" ) ; exit ( EXIT_FAILURE ) ;}
 
-			last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
+		  forward(rnn,  phrases[id].w2vec, phrases[id].nm);
 			//loss = loss-log(rnn->y[target[0]]);
 			//printf("log error : %lf", loss);
 
