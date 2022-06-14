@@ -46,10 +46,10 @@ void forward(RNN *rnn, double **x, int t_p)
 		tan_h(h, rnn->hidden_size, temp4);
 		
 	}
+	mat_mul(temp6 , h, rnn->Wyh, rnn->hidden_size, rnn->output_size);
+	add_vect(temp6 , temp6, rnn->by, rnn->output_size);
+	//printf("\n---------bon----------\n");
 
-	mat_mul(temp5 , h, rnn->Wyh, rnn->hidden_size, rnn->output_size);
-	add_vect(temp6 , temp5, rnn->by, rnn->output_size);
-	
 	softmax(rnn->y , rnn->output_size, temp6);
 	
 
@@ -458,7 +458,34 @@ void copy_vect(double *a, double *b , int n)
 	}
 	
 }
+
+PHRASE **BuildBacht(PHRASE *phrase, int np, int nthreads)
+{
+	int bacht_size = np / nthreads;
+	PHRASE **finals = malloc(sizeof(PHRASE *)*bacht_size);
+	for (int i = 0; i < nthreads; i++)
+	{
+		finals[i] = malloc(sizeof(phrase)*bacht_size);
+	}
+	
+
+	for (int i = 0; i < nthreads; i++)
+	{
+		for (int j = 0; j < bacht_size; j++)
+		{
+			finals[i][j] = phrase[j];
+		}
+		
+	}
+
+	return finals;
+	
+}
 //====================================================
+
+
+
+
 
 
 
