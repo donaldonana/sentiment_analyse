@@ -7,7 +7,7 @@ import pickle
 
 class RNN:
 	"""docstring for RNN"""
-	def __init__(self, input_size, output_size, hidden_size=4):
+	def __init__(self, input_size, output_size, hidden_size=2):
 		
 		self.Whh = randn(hidden_size, hidden_size) / 1000
 		self.Wxh = randn(hidden_size, input_size) / 1000

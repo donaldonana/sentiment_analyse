@@ -8,30 +8,30 @@ int main()
 {
 
    
-	double **t = allocate_dynamic_float_matrix(2,3);
+	double **t = allocate_dynamic_float_matrix(2,2);
 
-	double t2[3] = {2,2,3};
+	double t2[2] = {1,2};
 	
-	/*t[0][0] = 2;
-	t[0][1] = 1;
-	t[0][2] = 1;
+	t[0][0] = 2;
+	t[0][1] = 3;
+	//t[0][2] = 1;
 	t[1][0] = 3;
-	t[1][1] = 0;
-	t[1][2] = 1;
+	t[1][1] = 3;
+	//t[1][2] = 1;
 
-	double *r = malloc(sizeof(double)*3);
+	double *r = malloc(sizeof(double)*2);
 
-	mat_mul(r, t2, t, 4, 2);
-    add_vect(r,t2, t2, 3);
-	softmax(r, 3, t2);
-	for (int i = 0; i < 3; i++)
+	mat_mul(r, t2, t, 2, 2);
+    //add_vect(r,t2, t2, 3);
+	//softmax(r, 3, t2);
+	for (int i = 0; i < 2; i++)
 	{
 		printf(" %lf \n", r[i]);
 	}
 	
 
 	free(r);
-	deallocate_dynamic_float_matrix(t, 2);*/
+	/*deallocate_dynamic_float_matrix(t, 2);
 	double r[] = {0,0};
 	double *R;
 	R = vect_pow_2(t2, 3);
@@ -47,7 +47,7 @@ int main()
 	{
 		printf(" %lf \n", R[i]);
 	}
-
+*/
 
 
 

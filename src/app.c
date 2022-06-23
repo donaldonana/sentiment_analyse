@@ -603,7 +603,7 @@ void OneHot(){
   hotvect = malloc(sizeof(double)*vocab_size*vocab_size);
   initialize_vect_zero(hotvect, vocab_size*vocab_size);
   FILE *file;
-  file = fopen("OneHot.txt", "w+");
+  file = fopen("./OneHot.txt", "wb");
   for (a = 0; a < vocab_size; a++) {
       fprintf(file,"(%s   %ld) ", vocab[a].word, a);
       
@@ -621,6 +621,7 @@ void OneHot(){
 
     printf("\n\n -----end of one hot encoding -----\n\n");
     
+     fclose(file);
 }
 
 
@@ -781,9 +782,12 @@ for (int i = 0; i < np; i++)
 
   RNN *rnn = malloc(sizeof(RNN));
 
-  int intputs = vocab_size , hidden = 4 , output = 2;
+  int intputs = vocab_size , hidden = 64 , output = 2;
   //printf("///%d////", intputs);
   initialize_rnn(rnn, intputs, hidden, output);
+  //ToEyeMatrix(rnn->Whh, rnn->hidden_size, rnn->hidden_size);
+  ToEyeMatrix(rnn->Wxh, rnn->hidden_size, rnn->input_size);
+
   //display_matrix(rnn->Wxh, rnn->input_size, rnn->hidden_size);
 
   //double **intput = allocate_dynamic_float_matrix(2,2);
@@ -855,10 +859,10 @@ for (int i = 0; i < 1000; i++)
     {
       printf("\n-------------------EPOCH %d----------------\n", i+1);
       printf(" Train Mean Log Error : %lf \n", loss/np);
-      //forward(rnn, phrases[58].w2vec, phrases[58].nm);
+      forward(rnn, phrases[1].w2vec, phrases[1].nm);
       //loss = (-1)*log(rnn->y[target[58]]);
       printf("\n Test sur La Derniére Phrase : \n");
-      printf(" target : %d \n", target[58]);
+      printf(" target : %d \n", target[1]);
       //printf(" nombre mots : %d ", phrases[58].nm);
       for (int k = 0; k < rnn->output_size; k++)
       {

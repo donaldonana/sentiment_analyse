@@ -109,4 +109,6 @@ int load_target(int *target);
 void randomize(int *array, int n); 
 
 
+void ToEyeMatrix(double **A, int row, int col) ;
+
 #endif
