@@ -785,9 +785,8 @@ for (int i = 0; i < np; i++)
   int intputs = vocab_size , hidden = 64 , output = 2;
   //printf("///%d////", intputs);
   initialize_rnn(rnn, intputs, hidden, output);
-  //ToEyeMatrix(rnn->Whh, rnn->hidden_size, rnn->hidden_size);
-  ToEyeMatrix(rnn->Wxh, rnn->hidden_size, rnn->input_size);
-
+  ToEyeMatrix(rnn->Whh, rnn->hidden_size, rnn->hidden_size);
+  
   //display_matrix(rnn->Wxh, rnn->input_size, rnn->hidden_size);
 
   //double **intput = allocate_dynamic_float_matrix(2,2);

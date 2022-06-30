@@ -2,13 +2,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "utils.h"
 
 int main()
 {
-
+	srand(time(NULL));
    
-	double **t = allocate_dynamic_float_matrix(2,2);
+	int s = 2;
+	double **t = allocate_dynamic_float_matrix(s,s);
+	double **R = allocate_dynamic_float_matrix(s,s);
 
 	double t2[2] = {1,2};
 	
@@ -24,11 +27,18 @@ int main()
 	mat_mul(r, t2, t, 2, 2);
     //add_vect(r,t2, t2, 3);
 	//softmax(r, 3, t2);
-	for (int i = 0; i < 2; i++)
-	{
-		printf(" %lf \n", r[i]);
-	}
+	randomly_initalialize_mat(t, s, s);
+	//for (int i = 0; i < 2; i++)
+	//{
+		//printf(" %lf \n", t[i]);
+	//}
+	display_matrix(t,s,s);
 	
+	printf("\n------------------\n");
+
+	MatrixMult(R,t,t,s);
+
+	display_matrix(R,s,s);
 
 	free(r);
 	/*deallocate_dynamic_float_matrix(t, 2);
