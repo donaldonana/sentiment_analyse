@@ -729,3 +729,34 @@ void randomize(int *array, int n) {
         array[i] = t;
     }
 }
+
+ void ToEyeMatrix(double **A, int row, int col) {
+
+for(int i=0;i<row;i++)                                                           
+  {                                                                             
+    for(int j=0;j<col;j++)                                                      
+    {                                                                           
+      if(i==j)                                                                  
+      {                                                                         
+        A[i][j] = 1;                                              
+      }                                                                         
+      else                                                                      
+      {                                                                         
+       A[i][j] = 0;                                               
+      }                                                                         
+    }                                                                           
+  } 
+}                 
+
+
+void MatrixMult(double **c, double **a, double **b , int n){
+
+	for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+		  c[i][j] = 0;
+         for (int k = 0; k < n; ++k) {
+            c[i][j] += a[i][k] * b[k][j];
+         }
+      }
+   }
+}
