@@ -356,7 +356,8 @@ void minus_matrix(double **r, double **a , double **b, int row, int col)
 	{
 		for (int j = 0; j < col; j++)
 		{
-			r[i][j] = a[i][j] - b[i][j];
+			r[i][j] = a[i][j] - (0.02)*b[i][j];
+			//r[i][j] = 0.0;
 
 		}
 		
@@ -457,34 +458,7 @@ void copy_vect(double *a, double *b , int n)
 	}
 	
 }
-
-PHRASE **BuildBacht(PHRASE *phrase, int np, int nthreads)
-{
-	int bacht_size = np / nthreads;
-	PHRASE **finals = malloc(sizeof(PHRASE *)*bacht_size);
-	for (int i = 0; i < nthreads; i++)
-	{
-		finals[i] = malloc(sizeof(phrase)*bacht_size);
-	}
-	
-
-	for (int i = 0; i < nthreads; i++)
-	{
-		for (int j = 0; j < bacht_size; j++)
-		{
-			finals[i][j] = phrase[j];
-		}
-		
-	}
-
-	return finals;
-	
-}
 //====================================================
-
-
-
-
 
 
 
@@ -605,6 +579,7 @@ void deallocate_dynamic_float_matrix(double **matrix, int row)
 
 void display_matrix(double **a, int row, int col)
 {
+	printf("\n row = %d \t col = %d \n", row, col);
 	for (int i = 0; i < row; i++)
 	{
 		printf("\n");
@@ -743,7 +718,7 @@ void randomize(int *array, int n) {
     }
 }
 
- void ToEyeMatrix(double **A, int row, int col) {
+void ToEyeMatrix(double **A, int row, int col) {
 
 for(int i=0;i<row;i++)                                                           
   {                                                                             
@@ -773,3 +748,4 @@ void MatrixMult(double **c, double **a, double **b , int n){
       }
    }
 }
+
