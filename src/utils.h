@@ -32,6 +32,7 @@ struct RNN
 	double *bh;
 	double *by;
 	double *y ;
+	double *last_hs;
 	int input_size;
 	int hidden_size;
 	int output_size;
