@@ -779,9 +779,11 @@ for (int i = 0; i < phrases[0].nm; i++)
 
   target = malloc(sizeof(int)*np);
   load_target(target);
-  rnn = malloc(sizeof(RNN));
-  int intputs = layer1_size , hidden = 64 , output = 2;
+  RNN *rnn = malloc(sizeof(RNN));
+  int intputs = vocab_size , hidden = 64 , output = 2;
+  //printf("///%d////", intputs);
   initialize_rnn(rnn, intputs, hidden, output);
+  ToEyeMatrix(rnn->Whh, rnn->hidden_size, rnn->hidden_size);
 
   if (parallel == 1)
   {
@@ -872,78 +874,101 @@ for (int i = 0; i < phrases[0].nm; i++)
 // =========================================================================================
   else {
 
-      double **last_h;
-      double loss;
-      double *dl_dy = malloc(sizeof(double)*rnn->output_size);
-      int id;
-      int *index = malloc(sizeof(int)*np);
+    double loss = 0;
+    double *dl_dy = malloc(sizeof(double)*rnn->output_size);
+    int *index = malloc(sizeof(int)*np);
+    int id ;
+    for (int i = 0; i < np; i++)
+    {
+      index[i] = i;
+      
+    }
+    clock_t begin = clock();
 
-      clock_t begin = clock();
-      printf("\n\n\tTRAINING PHASE IN PROCESS\n\n");
-      for (int i = 0; i < 1000; i++)
+
+
+    for (int i = 0; i < 1000; i++)
+    {
+      loss = 0;
+      randomize(index, np);
+
+      for (int j = 0; j < np; j++)
       {
-        loss = 0;
-        randomize(index, np);
-
-        for (int j = 0; j < np; j++)
-        {
         //forward
-            id = j;
-          // id = j;
-            //int j = rand() % (np);
-            //printf("\n%d\n",j);
+        id = j;
+        //id = index[j];
+        //printf("\n%d\n",j);
+          
+        forward(rnn,  phrases[id].w2vec, phrases[id].nm);
+        //printf("\n--->%d\n", j);
+        loss = loss-log(rnn->y[target[id]]);
+        //printf("log error : %lf", loss);
+          //# Build dL/dy
+        copy_vect(dl_dy, rnn->y, rnn->output_size);
+        dl_dy[target[id]] = dl_dy[target[id]] - 1 ;
+        
+          //backforward
+          //printf("\n------%d--b----\n", i);
 
-           last_h =  forward(rnn,  phrases[id].w2vec, phrases[id].nm);
-            //printf("\n--->%d\n", j);
-            //loss = loss-log(rnn->y[target[id]]);
-            //printf("log error : %lf", loss);
-            //# Build dL/dy
-            copy_vect(dl_dy, rnn->y, rnn->output_size);
-            dl_dy[target[id]] = dl_dy[target[id]] - 1 ;
-          
-            //backforward
-            //printf("\n------%d--b----\n", i);
+        backforward(rnn, dl_dy, phrases[id].nm);
 
-            backforward(rnn, dl_dy, last_h, phrases[id].nm);
+          //display_matrix(rnn->Wyh, rnn->output_size, rnn->hidden_size);
+        
+        //for (int k = 0; k < rnn->output_size; k++)
+        //{
+          //printf("\n %d : %lf", k, rnn->y[k]);
+        //}
 
-          
-          //for (int k = 0; k < rnn->output_size; k++)
-          //{
-            //printf("\n %d : %lf", k, rnn->y[k]);
-          //}
-        }
-          
-          
-        //if (1)
-        if (i % 100 == 99)
+
+      } 
+
+      
+      
+      //if (1)
+      if (i % 100 == 99)
+      {
+        printf("\n-------------------EPOCH %d----------------\n", i+1);
+        printf(" Train Mean Log Error : %lf \n", loss/np);
+        forward(rnn, phrases[1].w2vec, phrases[1].nm);
+        //loss = (-1)*log(rnn->y[target[58]]);
+        printf("\n Test sur La Derniére Phrase : \n");
+        printf(" target : %d \n", target[1]);
+        //printf(" nombre mots : %d ", phrases[58].nm);
+        for (int k = 0; k < rnn->output_size; k++)
         {
-          printf("\n-------------------EPOCH %d----------------\n", i+1);
-          //printf("erreur et prediction : \n");
-          forward(rnn, phrases[14].w2vec, phrases[14].nm);
-          loss = (-1)*log(rnn->y[target[14]]);
-          printf("\n log error : %lf \n", loss);
-          /*for (int k = 0; k < rnn->output_size; k++)
-          {
-            printf("\n %d : %lf", k, rnn->y[k]);
-          }*/
-          printf("\n");
-
-          //for (int n = 0; n < rnn->output_size; n++)
-          //{
-              //printf("%lf \n", rnn->by[n]);
-            //}
+          printf("\n %d : %lf", k, rnn->y[k]);
         }
+        printf("\n\n");
 
-      }
+        //for (int n = 0; n < rnn->output_size; n++)
+      //{
+          //printf("%lf \n", rnn->by[n]);
+        //}
 
-      clock_t end = clock();
-      double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-      printf("\n\t FINAL ERROR : %lf \n", loss);
-      printf("\n\t FULL TRAIN TIME: %lf s\n", time_spent);
 
     }
+
+
+  }
+
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    printf("\n\t ********* FULL TRAIN TIME: %lf s *********\n\n", time_spent);
   
+
+  }
+  
+
+
+
+
+
+
+
+
+
   
   return 0;
 }
@@ -983,7 +1008,7 @@ void *RnnTraining(void *thread_idx)
       r = pthread_mutex_lock(&mutex_compteur) ;
       if (r!=0) { perror ("ERREUR pthread_mutex_lock()" ) ; exit ( EXIT_FAILURE ) ;}
 
-		  last_h = forward(rnn,  phrases[id].w2vec, phrases[id].nm);
+		  forward(rnn,  phrases[id].w2vec, phrases[id].nm);
 			//loss = loss-log(rnn->y[target[0]]);
 			//printf("log error : %lf", loss);
 
@@ -993,7 +1018,7 @@ void *RnnTraining(void *thread_idx)
 		
       
       // Début de section critique (backforward)
-			backforward(rnn, dl_dy, last_h, phrases[id].nm);
+			backforward(rnn, dl_dy, phrases[id].nm);
       // Fin de section critique : dévérouillage de mutex
       r = pthread_mutex_unlock (&mutex_compteur) ;
       if (r!=0) { perror ("ERREUR pthread_mutex_unlock()") ; exit ( EXIT_FAILURE ) ;}
