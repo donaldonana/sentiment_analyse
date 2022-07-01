@@ -1,4 +1,4 @@
-this is not very very good
+not good
 good
 bad
 happy
@@ -57,9 +57,4 @@ i was not good and not happy earlier
 i am not at all bad or sad right now
 i am not at all good or happy right now
 this was not happy and not good earlier
-this is not happy
-i was not happy and not good earlier
-this is not very sad
-i am very very happy
-this is not very very good
-this is very very sad
+good good good 
