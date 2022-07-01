@@ -47,6 +47,7 @@ char train_file[MAX_STRING], output_file[MAX_STRING];
 char save_vocab_file[MAX_STRING], read_vocab_file[MAX_STRING];
 struct vocab_word *vocab;
 int binary = 0, cbow = 1, debug_mode = 2, window = 5, min_count = 5, num_threads = 12, min_reduce = 1;
+double *hotvect ;
 int *vocab_hash;
 long long vocab_max_size = 1000, vocab_size = 0, layer1_size = 100;
 long long train_words = 0, word_count_actual = 0, iter = 5, file_size = 0, classes = 0;
@@ -616,18 +617,31 @@ int ArgPos(char *str, int argc, char **argv) {
 
 void OneHot(){
 
-  long a, b, c, d;
-  double *hotvect = malloc(sizeof(double)*vocab_size*vocab_size);
+  long a, b;
+  hotvect = malloc(sizeof(double)*vocab_size*vocab_size);
   initialize_vect_zero(hotvect, vocab_size*vocab_size);
-
+  FILE *file;
+  file = fopen("./OneHot.txt", "wb");
   for (a = 0; a < vocab_size; a++) {
-      printf("(%s   %ld) ", vocab[a].word, a);
+      fprintf(file,"(%s   %ld) ", vocab[a].word, a);
       
-      for (b = 0; b < vocab_size; b++) printf("%lf ", hotvect[a * vocab_size + b]);
-      printf("\n");
+      for (b = 0; b < vocab_size; b++){
+          if (a == b)
+          {
+            hotvect[a * vocab_size + b] = 1;
+          }
+          
+          fprintf(file, "%lf ", hotvect[a * vocab_size + b]);
+      } 
+      fprintf(file,"\n");
+
     }
+
+    printf("\n\n -----end of one hot encoding -----\n\n");
     
+     fclose(file);
 }
+
 
 
 
@@ -713,42 +727,57 @@ int main(int argc, char **argv) {
     expTable[i] = expTable[i] / (expTable[i] + 1);                   // Precompute f(x) = x / (x + 1)
   }
   TrainModel();
-  //for (int b = 0; b < layer1_size; b++) printf("%lf ", syn0[1 * layer1_size + b]);
+  OneHot();
+
+  for (int b = 0; b < vocab_size; b++) printf("%lf ", hotvect[1 * vocab_size + b]);
 
   //int ind = SearchVocab("algorithms");
 
   //printf("\n%d\n", ind);
-
 FILE *fin = fopen("./text.txt", "rb");
-np = NPhrases(fin);
+int np = NPhrases(fin);
 char word[MAX_STRING];
 
-phrases = (PHRASE  *)malloc(sizeof(PHRASE)*np);
+PHRASE *phrases = (PHRASE  *)malloc(sizeof(PHRASE)*np);
 MotsParPhrase(fin, phrases);
 
 for (int i = 0; i < np; i++)
 {
   //printf("\n %d \n",  phrases[i].nm );
-  phrases[i].w2vec = allocate_dynamic_float_matrix(phrases[i].nm, layer1_size);
+  phrases[i].w2vec = allocate_dynamic_float_matrix(phrases[i].nm, vocab_size);
+  //double **v;
 }
+
+
+//alloc_phrase(phrase, mpp, layer1_size, np);
 
 int n = 0;
 int p = 0 ;
 fseek(fin, 0, SEEK_SET);
 
+
 while (1) {
   ReadWord(word, fin);
   if (feof(fin) ) break;
+
+  //double *mot = malloc(sizeof(double)*layer1_size);
   if ( strcmp(word, "</s>") != 0 )
   {
     int ind = SearchVocab(word);
-    for (int b = 0; b < layer1_size; b++){
-      phrases[n].w2vec[p][b] = syn0[ind * layer1_size + b];
+    //printf("\n%s--(%d)\n : ", word, ind);
+    for (int b = 0; b < vocab_size; b++){
+      //printf("%lf ", hotvect[ind * vocab_size + b]);
+      phrases[n].w2vec[p][b] = hotvect[ind * vocab_size + b];
     } 
+    //printf("\n\n");
+    //phrases[n].w2vec[p] = mot;
     p = p + 1;
-  }           
+  }
+            
+            
   if (strcmp(word, "</s>") == 0)
   {
+  //printf("\n------------\n");
     n = n + 1;
     p = 0 ;
   }
@@ -759,7 +788,7 @@ for (int i = 0; i < phrases[0].nm; i++)
 {
   printf("\n");
 
-  for (int j = 0; j < layer1_size; j++)
+  for (int j = 0; j < vocab_size; j++)
   {
     printf("%lf ", phrases[0].w2vec[i][j]);
   }
@@ -767,15 +796,6 @@ for (int i = 0; i < phrases[0].nm; i++)
   printf("\n\n");
   
 }
-
-
-  /*double loss;
-  int *index = malloc(sizeof(int)*np);
-  for (int i = 0; i < np; i++)
-  {
-    index[i] = i;
-    
-  }*/
 
   target = malloc(sizeof(int)*np);
   load_target(target);
