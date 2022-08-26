@@ -619,7 +619,12 @@ void OneHot(){
   long a, b, c, d;
   double *hotvect = malloc(sizeof(double)*vocab_size*vocab_size);
   initialize_vect_zero(hotvect, vocab_size*vocab_size);
+<<<<<<< HEAD
 
+=======
+  FILE *file;
+  file = fopen("./OneHot.txt", "wb");
+>>>>>>> 15bf9dd8b5145cf7233ba984a71a0397b43685e5
   for (a = 0; a < vocab_size; a++) {
       printf("(%s   %ld) ", vocab[a].word, a);
       
@@ -627,6 +632,7 @@ void OneHot(){
       printf("\n");
     }
     
+     fclose(file);
 }
 
 
@@ -769,9 +775,52 @@ for (int i = 0; i < phrases[0].nm; i++)
 }
 
 
+<<<<<<< HEAD
   /*double loss;
   int *index = malloc(sizeof(int)*np);
   for (int i = 0; i < np; i++)
+=======
+  RNN *rnn = malloc(sizeof(RNN));
+
+  int intputs = vocab_size , hidden = 64 , output = 2;
+  //printf("///%d////", intputs);
+  initialize_rnn(rnn, intputs, hidden, output);
+  ToEyeMatrix(rnn->Whh, rnn->hidden_size, rnn->hidden_size);
+  
+  //display_matrix(rnn->Wxh, rnn->input_size, rnn->hidden_size);
+
+  //double **intput = allocate_dynamic_float_matrix(2,2);
+  //double m1[] = {1,0};
+  //double m2[] = {0,1};
+  //intput[0] = m1;
+  //intput[1] = m2;
+
+  // the target
+  //int target  = 1;
+target = malloc(sizeof(int)*np);
+load_target(target);
+//double error[2] = {0,0};
+double loss = 0;
+double *dl_dy = malloc(sizeof(double)*rnn->output_size);
+int *index = malloc(sizeof(int)*np);
+int id ;
+for (int i = 0; i < np; i++)
+{
+  index[i] = i;
+  
+}
+  
+  //printf("\n-----tout est oki-----\n");
+
+
+
+
+clock_t begin = clock();
+
+
+
+for (int i = 0; i < 1000; i++)
+>>>>>>> 15bf9dd8b5145cf7233ba984a71a0397b43685e5
   {
     index[i] = i;
     
@@ -805,6 +854,7 @@ for (int i = 0; i < phrases[0].nm; i++)
       ind(indx, np, pthreads);
       bacht_s = np / pthreads;
       
+<<<<<<< HEAD
       // 1) Initialisation Sémaphore
       r = pthread_mutex_init (& mutex_compteur , NULL ) ;
       if (r!=0) { perror ("ERREUR pthread_mutex_init()") ; exit ( EXIT_FAILURE ) ;} // if
@@ -851,6 +901,25 @@ for (int i = 0; i < phrases[0].nm; i++)
       forward(rnn, phrases[1].w2vec, phrases[1].nm);
       double loss = (-1)*log(rnn->y[target[1]]);
       printf("\n log error : %lf \n", loss);
+=======
+      //for (int k = 0; k < rnn->output_size; k++)
+      //{
+        //printf("\n %d : %lf", k, rnn->y[k]);
+      //}
+    } 
+      
+      
+    //if (1)
+    if (i % 100 == 99)
+    {
+      printf("\n-------------------EPOCH %d----------------\n", i+1);
+      printf(" Train Mean Log Error : %lf \n", loss/np);
+      forward(rnn, phrases[1].w2vec, phrases[1].nm);
+      //loss = (-1)*log(rnn->y[target[58]]);
+      printf("\n Test sur La Derniére Phrase : \n");
+      printf(" target : %d \n", target[1]);
+      //printf(" nombre mots : %d ", phrases[58].nm);
+>>>>>>> 15bf9dd8b5145cf7233ba984a71a0397b43685e5
       for (int k = 0; k < rnn->output_size; k++)
       {
         printf("\n %d : %lf", k, rnn->y[k]);

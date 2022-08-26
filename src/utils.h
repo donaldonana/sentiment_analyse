@@ -115,4 +115,8 @@ void ind(long *v, int np, int nthreads);
 
 
 
+void ToEyeMatrix(double **A, int row, int col) ;
+
+void MatrixMult(double **c, double **a, double **b , int n);
+
 #endif

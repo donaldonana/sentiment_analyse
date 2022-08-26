@@ -7,11 +7,13 @@ import pickle
 
 class RNN:
 	"""docstring for RNN"""
-	def __init__(self, input_size, output_size, hidden_size=4):
+	def __init__(self, input_size, output_size, hidden_size=64):
 		
-		self.Whh = randn(hidden_size, hidden_size) / 1000
-		self.Wxh = randn(hidden_size, input_size) / 1000
-		self.Why = randn(output_size, hidden_size) / 1000
+		#self.Whh = np.random.rand(hidden_size, hidden_size) 
+		self.Whh =  randn(hidden_size, hidden_size) / 1000
+		#self.Whh = np.identity(hidden_size)
+		self.Wxh =  np.random.rand(hidden_size, input_size) / 1000
+		self.Why =  np.random.rand(output_size, hidden_size) / 1000
 
 		# Biases
 		self.bh = np.zeros((hidden_size, 1))
@@ -76,7 +78,7 @@ class RNN:
 	      # Next dL/dh = dL/dh * (1 - h^2) * Whh
 	      d_h = self.Whh @ temp
 
-	    # Clip to prevent exploding gradients.
+	    #Clip to prevent exploding gradients.
 	    #for d in [d_Wxh, d_Whh, d_Why, d_bh, d_by]:
 	      #np.clip(d, -1, 1, out=d)
 
